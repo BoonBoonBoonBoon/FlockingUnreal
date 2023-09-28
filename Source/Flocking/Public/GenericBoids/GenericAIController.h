@@ -36,6 +36,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	UBehaviorTreeComponent* BTComp;
 
+
+private:
+	// Stored for later, Possibly never used.
+	
 	// Ai's Sight.
 	UPROPERTY(EditAnywhere,Category=Perception)
 	TObjectPtr<UAISenseConfig_Sight> Sight_Config;
