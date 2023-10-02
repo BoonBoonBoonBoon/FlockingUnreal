@@ -3,3 +3,22 @@
 
 #include "GenericBoids/GenericAIController.h"
 
+AGenericAIController::AGenericAIController()
+{
+}
+
+void AGenericAIController::BasicMovement()
+{
+
+
+
+	//Boid->AddMovementInput(CurrentLocation);
+	
+}
+
+void AGenericAIController::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	
+}

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GenericBoidAI.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Team.h"
@@ -19,8 +20,12 @@ class FLOCKING_API AGenericAIController : public AAIController
 
 public:
 
+	AGenericAIController();
 
-
+	UPROPERTY(EditAnywhere)
+	class AGenericBoidAI* Boid;
+	
+	void BasicMovement();
 
 	
 protected:
@@ -51,6 +56,7 @@ private:
 
 public:
 	
+	virtual void Tick(float DeltaTime) override;
 
 	
 

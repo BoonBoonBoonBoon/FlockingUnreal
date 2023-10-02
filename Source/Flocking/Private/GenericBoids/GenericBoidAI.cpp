@@ -24,12 +24,11 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-}
-
-// Called to bind functionality to input
-void AGenericBoidAI::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	
+	FVector Location = GetActorLocation();
+	Location += GetActorForwardVector() * 500 * DeltaTime;
+	SetActorLocation(Location);
+	
+	
 }
 
