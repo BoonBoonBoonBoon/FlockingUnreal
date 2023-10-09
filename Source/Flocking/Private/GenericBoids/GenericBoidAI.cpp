@@ -3,6 +3,8 @@
 
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/KismetMathLibrary.h"
+
 
 
 // Sets default values
@@ -36,22 +38,24 @@ void AGenericBoidAI::ForwardTrace()
 		DrawDebugLine(GetWorld(), ActorLocation, EndLocation, FColor::Red, false, -1, 1, 6);
 		if(HitResult.bBlockingHit)
 		{
-			bShouldStop = true;
 			// Draw multiple lines within the pheriphral range
 			// Make the hit change the velcity and angle of the actor
+			//GetActorRightVector();
+			
+			// Takes two vector and boolean
+			//UKismetMathLibrary::SelectVector();
+
+			
 		}
 		else
 		{
-			bShouldStop = false;
+			
 		}
 	}
 }
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime)
 {
-
-	if(!bShouldStop)
-	{
 		Speed = 400.f;
 		// Where Actor currently is 
 		FVector CurrentLocation = GetActorLocation();
@@ -59,11 +63,12 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime)
 		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
 		// Sets its new location
 		SetActorLocation(CurrentLocation);
-	} else
-	{
-		return;
-	}
 }
+
+void AGenericBoidAI::TurnMovement()
+{
+}
+
 
 // Called when the game starts or when spawned
 void AGenericBoidAI::BeginPlay()

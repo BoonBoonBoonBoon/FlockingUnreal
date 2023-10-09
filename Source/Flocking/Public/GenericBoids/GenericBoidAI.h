@@ -22,6 +22,8 @@ public:
 	// Moves the AI forward
 	void ForwardMovement(float Speed, float DeltaTime);
 
+	void TurnMovement();
+	
 	// Turns the AI's trajectory 
 	void TurnTrajectory(float Speed, float DeltaTime);
 
@@ -45,5 +47,5 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	bool bShouldStop;
-	
+	bool bShouldTurn;
 };
