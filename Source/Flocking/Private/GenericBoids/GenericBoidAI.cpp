@@ -41,21 +41,32 @@ void AGenericBoidAI::ForwardTrace()
 			// Draw multiple lines within the pheriphral range
 			// Make the hit change the velcity and angle of the actor
 			//GetActorRightVector();
-			
 			// Takes two vector and boolean
 			//UKismetMathLibrary::SelectVector();
 
+
 			
+			// Get the Right Vector of the actor 
+			FVector NewVector = GetActorRightVector() * 512;
+			bool bTurning = true;
+			TurnMovement(NewVector);
+			ForwardMovement(NULL, NULL, bTurning);
 		}
 		else
 		{
-			
+			return;
 		}
 	}
 }
 
-void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime)
+void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
+	if(isTurning)
+	{
+		
+		
+	} else if (!isTurning)
+	{
 		Speed = 400.f;
 		// Where Actor currently is 
 		FVector CurrentLocation = GetActorLocation();
@@ -63,10 +74,12 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime)
 		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
 		// Sets its new location
 		SetActorLocation(CurrentLocation);
+	}
 }
 
-void AGenericBoidAI::TurnMovement()
+void AGenericBoidAI::TurnMovement(const FVector& Rotation)
 {
+	SetActorLocation(Rotation);
 }
 
 
@@ -83,6 +96,6 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ForwardTrace();
-	ForwardMovement(NULL, DeltaTime);
+	ForwardMovement(NULL, DeltaTime, NULL);
 }
 

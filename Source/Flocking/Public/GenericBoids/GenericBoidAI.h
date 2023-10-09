@@ -20,9 +20,9 @@ public:
 	void ForwardTrace();
 
 	// Moves the AI forward
-	void ForwardMovement(float Speed, float DeltaTime);
+	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
-	void TurnMovement();
+	void TurnMovement(const FVector& Rotation);
 	
 	// Turns the AI's trajectory 
 	void TurnTrajectory(float Speed, float DeltaTime);
