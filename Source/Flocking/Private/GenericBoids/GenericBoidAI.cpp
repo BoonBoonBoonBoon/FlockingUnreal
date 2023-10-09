@@ -11,7 +11,11 @@ AGenericBoidAI::AGenericBoidAI()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	
+		Head=CreateDefaultSubobject<USphereComponent>("HeadComp");
+    	Head->SetupAttachment(RootComponent);
+    
+    	HeadShape=CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
+    	HeadShape->SetupAttachment(Head);
 }
 
 void AGenericBoidAI::ForwardTrace()
@@ -22,18 +26,23 @@ void AGenericBoidAI::ForwardTrace()
 	// Start Location
 	FVector ActorLocation = GetActorLocation();
 	// End of Trace
-	FVector EndLocation = GetActorLocation() + FVector(300.f,0,0);
+	FVector EndLocation = GetActorLocation()+=GetActorForwardVector()+=FVector(500,0,0);
 	// Object we are looking for
 	FCollisionQueryParams QueryParams;
 	
 	bool Trace = GetWorld()->LineTraceSingleByChannel(HitResult, ActorLocation, EndLocation, ECC_Visibility, QueryParams);
 	if(Trace)
 	{
-		DrawDebugLine(GetWorld(), ActorLocation, EndLocation, FColor::Blue, false, -1);
+		DrawDebugLine(GetWorld(), ActorLocation, EndLocation, FColor::Red, false, -1, 1, 6);
 		if(HitResult.bBlockingHit)
 		{
+			bShouldStop = true;
 			// Draw multiple lines within the pheriphral range
 			// Make the hit change the velcity and angle of the actor
+		}
+		else
+		{
+			bShouldStop = false;
 		}
 	}
 }
@@ -41,14 +50,19 @@ void AGenericBoidAI::ForwardTrace()
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime)
 {
 
-	Speed = 400.f;
-	// Where Actor currently is 
-	FVector CurrentLocation = GetActorLocation();
-	// adds the forward vector which is multiplied by the speed and the tick
-	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
-	// Sets its new location
-	SetActorLocation(CurrentLocation);
-	
+	if(!bShouldStop)
+	{
+		Speed = 400.f;
+		// Where Actor currently is 
+		FVector CurrentLocation = GetActorLocation();
+		// adds the forward vector which is multiplied by the speed and the tick
+		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
+		// Sets its new location
+		SetActorLocation(CurrentLocation);
+	} else
+	{
+		return;
+	}
 }
 
 // Called when the game starts or when spawned
