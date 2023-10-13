@@ -13,6 +13,11 @@ class FLOCKING_API AGenericBoidAI : public ACharacter
 	GENERATED_BODY()
 
 public:
+
+	// TODO Get the steering sorted
+	// after that setup the velocity and deceleration
+	// once movement it set, move onto the cohesion func
+	
 	// Sets default values for this character's properties
 	AGenericBoidAI();
 
