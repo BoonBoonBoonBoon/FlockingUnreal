@@ -50,12 +50,8 @@ void AGenericBoidAI::ForwardTrace()
 		{
 			DrawDebugLine(GetWorld(), StartLoc, Endloc,
 			FColor::Red, false, -1, 0, 4);
-
-			GetActorRightVector();
-			
 		}
 	}
-	
 }
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
@@ -71,9 +67,21 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 	
 }
 
-void AGenericBoidAI::TurnMovement(const FVector& Rotation)
+void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float Tick)
 {
-	SetActorLocation(Rotation);
+	if(bTraceHit)
+	{
+			int Speed = 10;
+			// Rotate The Actor 10 Degrees
+			FRotator RotateRightVector = FRotator(0, 10, 0);
+			RotateRightVector += Speed * Tick;
+			// Lerp?
+			// Follow forward movement? 
+			SetActorRotation(RotateRightVector);
+	} else
+	{
+		return;
+	}
 }
 
 
@@ -91,4 +99,5 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	ForwardTrace();
 	ForwardMovement(NULL, DeltaTime, NULL);
+	RightVectorMovement(NULL, DeltaTime);
 }

@@ -27,11 +27,11 @@ public:
 	// Moves the AI forward
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
-	void TurnMovement(const FVector& Rotation);
-	
-	// Turns the AI's trajectory 
-	void TurnTrajectory(float Speed, float DeltaTime);
+	// Turns the Actor Right
+	void RightVectorMovement(bool bTraceHit, float Tick);
 
+
+	
 	void Cohesion();
 
 	void Alignment();
