@@ -21,7 +21,7 @@ public:
 	// Sets default values for this character's properties
 	AGenericBoidAI();
 
-	// Gets the forward angle trace
+	//Peripheral Vision
 	void ForwardTrace();
 
 	// Moves the AI forward

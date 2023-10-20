@@ -3,6 +3,7 @@
 
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
+#include "CollisionQueryParams.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -20,53 +21,46 @@ AGenericBoidAI::AGenericBoidAI()
     	HeadShape->SetupAttachment(Head);
 }
 
+// Peripheral Vision
 void AGenericBoidAI::ForwardTrace()
 {
-	
-	// Out Hit 
-	FHitResult HitResult;
-	// Start Location
-	FVector ActorLocation = GetActorLocation();
-	// End of Trace
-	FVector EndLocation = GetActorLocation()+=GetActorForwardVector()+=FVector(500,0,0);
-	// Object we are looking for
-	FCollisionQueryParams QueryParams;
-	
-	bool Trace = GetWorld()->LineTraceSingleByChannel(HitResult, ActorLocation, EndLocation, ECC_Visibility, QueryParams);
-	if(Trace)
+	// 90 Degree angle set Vector for every 10 degrees (-45 being left, 45 being right, and 10 being for every sector)
+	// Could use for cohesion and others too and set to 360 degrees 
+	for(int32 Angle = -45; Angle <= 45; Angle += 10)
 	{
-		DrawDebugLine(GetWorld(), ActorLocation, EndLocation, FColor::Red, false, -1, 1, 6);
-		if(HitResult.bBlockingHit)
+
+		// Set the Vector rotation (Yaw) 
+		FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
+		// Return Hit
+		FHitResult Hit;
+		// Start Location of trace
+		FVector StartLoc = GetActorLocation();
+		// Trace Distance
+		const float TraceDistance = 600.f;
+		// Trace Params
+		const FCollisionQueryParams TraceParams;
+
+		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
+		
+		//FCollisionParameters::AddIgnoreActor(); Ignore Actor type
+		
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc,
+		ECC_Visibility, TraceParams);
+		if(bHit)
 		{
-			// Draw multiple lines within the pheriphral range
-			// Make the hit change the velcity and angle of the actor
-			//GetActorRightVector();
-			// Takes two vector and boolean
-			//UKismetMathLibrary::SelectVector();
+			DrawDebugLine(GetWorld(), StartLoc, Endloc,
+			FColor::Red, false, -1, 0, 4);
 
-
+			GetActorRightVector();
 			
-			// Get the Right Vector of the actor 
-			FVector NewVector = GetActorRightVector() * 512;
-			bool bTurning = true;
-			TurnMovement(NewVector);
-			ForwardMovement(NULL, NULL, bTurning);
-		}
-		else
-		{
-			return;
 		}
 	}
+	
 }
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	if(isTurning)
-	{
-		
-		
-	} else if (!isTurning)
-	{
+	
 		Speed = 400.f;
 		// Where Actor currently is 
 		FVector CurrentLocation = GetActorLocation();
@@ -74,7 +68,7 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
 		// Sets its new location
 		SetActorLocation(CurrentLocation);
-	}
+	
 }
 
 void AGenericBoidAI::TurnMovement(const FVector& Rotation)
@@ -98,4 +92,3 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	ForwardTrace();
 	ForwardMovement(NULL, DeltaTime, NULL);
 }
-
