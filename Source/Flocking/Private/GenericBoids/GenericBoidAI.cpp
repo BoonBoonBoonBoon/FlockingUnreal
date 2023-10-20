@@ -28,7 +28,6 @@ void AGenericBoidAI::ForwardTrace()
 	// Could use for cohesion and others too and set to 360 degrees 
 	for(int32 Angle = -45; Angle <= 45; Angle += 10)
 	{
-
 		// Set the Vector rotation (Yaw) 
 		FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
 		// Return Hit
@@ -39,17 +38,28 @@ void AGenericBoidAI::ForwardTrace()
 		const float TraceDistance = 600.f;
 		// Trace Params
 		const FCollisionQueryParams TraceParams;
-
+	
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
-		
+			
 		//FCollisionParameters::AddIgnoreActor(); Ignore Actor type
-		
+			
 		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc,
 		ECC_Visibility, TraceParams);
 		if(bHit)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
+				
 			DrawDebugLine(GetWorld(), StartLoc, Endloc,
 			FColor::Red, false, -1, 0, 4);
+				
+			while(Angle <= 10)
+			{
+				// Log the value of PerTrace
+				//UE_LOG(LogTemp, Warning, TEXT("PerTrace: %d"), PerTrace);
+					
+				RightVectorMovement(bHit, NULL);
+				//FPlatformProcess::Sleep(0.1f);
+			}
 		}
 	}
 }
@@ -71,12 +81,8 @@ void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float Tick)
 {
 	if(bTraceHit)
 	{
-			int Speed = 10;
 			// Rotate The Actor 10 Degrees
-			FRotator RotateRightVector = FRotator(0, 10, 0);
-			RotateRightVector += Speed * Tick;
-			// Lerp?
-			// Follow forward movement? 
+			const FRotator RotateRightVector = FRotator(0, 10, 0);
 			SetActorRotation(RotateRightVector);
 	} else
 	{
@@ -99,5 +105,49 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	ForwardTrace();
 	ForwardMovement(NULL, DeltaTime, NULL);
-	RightVectorMovement(NULL, DeltaTime);
+	//RightVectorMovement(NULL, DeltaTime);
 }
+
+
+
+
+
+// Define the starting angle
+//int32 Angle = -45;
+// Continuously rotate while the line trace hits something
+/*while (true)
+{
+	// Set the Vector rotation (Yaw) 
+	FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
+	// Start Location of trace
+	FVector StartLoc = GetActorLocation();
+	// Trace Distance
+	const float TraceDistance = 600.f;
+	// Trace Params
+	FCollisionQueryParams TraceParams;
+
+	FVector Endloc = StartLoc + DirectionVector * TraceDistance;
+    
+	// Perform the line trace
+	FHitResult Hit;
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Visibility, TraceParams);
+    
+	// Log the trace results
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
+        
+		// Rotate the actor by 10 degrees
+		FRotator NewRotation = GetActorRotation();
+		NewRotation.Yaw += 10;
+		SetActorRotation(NewRotation);
+	}
+	else
+	{
+		// Trace was unsuccessful, break out of the loop
+		break;
+	}
+    
+	// Increment the angle for the next trace
+	Angle += 10;
+}*/
