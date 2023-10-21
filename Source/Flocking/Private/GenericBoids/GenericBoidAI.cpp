@@ -57,7 +57,7 @@ void AGenericBoidAI::ForwardTrace()
 				// Log the value of PerTrace
 				//UE_LOG(LogTemp, Warning, TEXT("PerTrace: %d"), PerTrace);
 					
-				RightVectorMovement(bHit, NULL);
+				//RightVectorMovement(bHit, NULL);
 				//FPlatformProcess::Sleep(0.1f);
 			}
 		}
