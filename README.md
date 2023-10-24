@@ -12,7 +12,7 @@ To be implmented.
 There are three core rules the boids follow.
 
 * Cohesion : Boids Steers to stay near other boids.
-- Seperation : Boids streers to avoid collision with other boids.
-* Alignment : boids streers toward the same dircetion as others.
+- Seperation : Boids Steers to avoid collision with other boids.
+* Alignment : boids Steers toward the same direction as others.
 
   ![fig8-1](https://github.com/BoonBoonBoonBoon/FlockingUnreal/assets/84918413/431d1c1d-16c2-4e4d-9f7f-c0e0fdfbea71)
