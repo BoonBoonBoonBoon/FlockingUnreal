@@ -23,7 +23,7 @@ public:
 
 	
 	//Peripheral Vision
-	void ForwardTrace();
+	void ForwardTrace(float DeltaTime);
 
 	// Moves the AI forward
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
@@ -34,11 +34,13 @@ public:
 	// Turns the Actor Left
 	void LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
+	//***************** Make a controller for this 
 	
+	// Boids Steers to stay near other boids.
 	void Cohesion();
-
+	// Boids Steers to avoid collision with other boids.
 	void Alignment();
-
+	// boids Steers toward the same direction as others.
 	void Seperation();
 
 	UPROPERTY(EditAnywhere)
@@ -51,6 +53,13 @@ protected:
 	virtual void BeginPlay() override;
 
 	void DelayedRotation();
+
+	// Getter for boid rotation 
+	FRotator GetBoidRotation(const AActor* Actor){return GetActorRotation(); }
+
+	// Setter for boid rotation
+	FRotator SetBoidRotation(const AActor* Actor){FRotator NewLoc = SetActorRotation();};
+
 	
 public:
 	
@@ -63,12 +72,11 @@ public:
 	FRotator StartRotation = GetActorRotation();
 
 	// Target Rotation (90 Degrees)
-
 	const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
 
 	// The progress of the turn (0 to 1)
 	float TurnProgress = 0.f;
-	float RotationDelay = 4.f;
+	float RotationDelay = 10.f;
 	
 	int32 RightTurnRate = 0;
 	int32 LeftTurnRate = 0;
