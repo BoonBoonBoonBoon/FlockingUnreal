@@ -35,7 +35,7 @@ void AGenericBoidAI::ForwardTrace()
 		// Start Location of trace
 		FVector StartLoc = GetActorLocation();
 		// Trace Distance
-		const float TraceDistance = 600.f;
+		const float TraceDistance = 400.f;
 		// Trace Params
 		const FCollisionQueryParams TraceParams;
 	
@@ -51,14 +51,50 @@ void AGenericBoidAI::ForwardTrace()
 				
 			DrawDebugLine(GetWorld(), StartLoc, Endloc,
 			FColor::Red, false, -1, 0, 4);
-				
-			while(Angle <= 10)
+
+			// PsuedoCode
+
+			// We want to say if more angles are hit on the right side we turn left,
+			// if more angles are hit on the left side we turn right
+			// make a turn rate
+			int32 RightTurnRate = 0;
+			int32 LeftTurnRate = 0;
+
+			while (RightTurnRate < 90 && LeftTurnRate < 90)
 			{
-				// Log the value of PerTrace
-				//UE_LOG(LogTemp, Warning, TEXT("PerTrace: %d"), PerTrace);
-					
-				//RightVectorMovement(bHit, NULL);
-				//FPlatformProcess::Sleep(0.1f);
+				// Get a random choice if we should turn left or right
+				if(bool TurnRight = FMath::RandBool())
+				{
+					// If traces fire off on left actor turns right
+					for (; Angle < 0; RightTurnRate++)
+					{
+						const FRotator RightRotation = FRotator(0,RightTurnRate,0);
+						SetActorRotation(RightRotation);
+						UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
+
+						// Once hit maximum turn rate return
+						if(RightTurnRate ==  90)
+						{
+							return;
+						}
+					}
+				}
+				else
+				{
+					// If traces fire off on right actor turns left
+					for (; Angle > 0; LeftTurnRate++)
+					{
+						const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
+						SetActorRotation(LeftRotation);
+						UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
+						
+						// Once hit maximum turn rate return
+						if(RightTurnRate ==  90)
+						{
+							return;
+						}
+					}
+				}
 			}
 		}
 	}
