@@ -26,74 +26,44 @@ void AGenericBoidAI::ForwardTrace()
 {
 	// 90 Degree angle set Vector for every 10 degrees (-45 being left, 45 being right, and 10 being for every sector)
 	// Could use for cohesion and others too and set to 360 degrees 
-	for(int32 Angle = -45; Angle <= 45; Angle += 10)
+	for (int32 Angle = -45; Angle <= 45; Angle += 10)
 	{
 		// Set the Vector rotation (Yaw) 
 		FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
-		// Return Hit
+		
 		FHitResult Hit;
-		// Start Location of trace
 		FVector StartLoc = GetActorLocation();
-		// Trace Distance
 		const float TraceDistance = 400.f;
-		// Trace Params
 		const FCollisionQueryParams TraceParams;
-	
-		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
-			
-		//FCollisionParameters::AddIgnoreActor(); Ignore Actor type
-			
-		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc,
-		ECC_Visibility, TraceParams);
-		if(bHit)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
-				
-			DrawDebugLine(GetWorld(), StartLoc, Endloc,
-			FColor::Red, false, -1, 0, 4);
 
-			// PsuedoCode
+		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
+
+		//FCollisionParameters::AddIgnoreActor(); Ignore Actor type
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc,
+		                                                 ECC_Visibility, TraceParams);
+		if (bHit)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
+
+			DrawDebugLine(GetWorld(), StartLoc, Endloc,
+			              FColor::Red, false, -1, 0, 4);
 
 			// We want to say if more angles are hit on the right side we turn left,
 			// if more angles are hit on the left side we turn right
 			// make a turn rate
-			int32 RightTurnRate = 0;
-			int32 LeftTurnRate = 0;
-
-			while (RightTurnRate < 90 && LeftTurnRate < 90)
+			
+			
+			// If traces fire off on left actor turns right
+			for (; Angle < 0; RightTurnRate++)
 			{
-				// Get a random choice if we should turn left or right
-				if(bool TurnRight = FMath::RandBool())
+				RightVectorMovement(bHit, NULL, RightTurnRate);
+				//SetActorRotation(RightRotation);
+				//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
+				if (RightTurnRate == 90)
 				{
-					// If traces fire off on left actor turns right
-					for (; Angle < 0; RightTurnRate++)
-					{
-						const FRotator RightRotation = FRotator(0,RightTurnRate,0);
-						SetActorRotation(RightRotation);
-						UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
-
-						// Once hit maximum turn rate return
-						if(RightTurnRate ==  90)
-						{
-							return;
-						}
-					}
-				}
-				else
-				{
-					// If traces fire off on right actor turns left
-					for (; Angle > 0; LeftTurnRate++)
-					{
-						const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
-						SetActorRotation(LeftRotation);
-						UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
-						
-						// Once hit maximum turn rate return
-						if(RightTurnRate ==  90)
-						{
-							return;
-						}
-					}
+					//RightVectorMovement(bHit, NULL,NULL);
+					return;
 				}
 			}
 		}
@@ -102,7 +72,6 @@ void AGenericBoidAI::ForwardTrace()
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	
 		Speed = 400.f;
 		// Where Actor currently is 
 		FVector CurrentLocation = GetActorLocation();
@@ -110,20 +79,37 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
 		// Sets its new location
 		SetActorLocation(CurrentLocation);
-	
 }
 
-void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float Tick)
+void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate)
 {
+	// Log the parameters using UE_LOG
+	//UE_LOG(LogTemp, Warning, TEXT("bTraceHit: %s, DeltaTime: %f, TurnRate: %d"), bTraceHit ? TEXT("True") : TEXT("False"), DeltaTime, TurnRate);
+
+	
 	if(bTraceHit)
 	{
-			// Rotate The Actor 10 Degrees
-			const FRotator RotateRightVector = FRotator(0, 10, 0);
-			SetActorRotation(RotateRightVector);
-	} else
-	{
-		return;
+		const FRotator RightRotation = FRotator(0, TurnRate, 0);
+		
+		//UE_LOG(LogTemp, Warning, TEXT("Right Rotation: %s"), *RightRotation.ToString());
+		
+		TurnProgress += DeltaTime / RotationDelay;
+		TurnProgress = FMath::Clamp(TurnProgress, 0.f, 1.f);
+		
+		UE_LOG(LogTemp, Warning, TEXT("TurnProg: %f "), TurnProgress);
+		
+		// Interpolate the rotation smoothly using Lerp
+		// THIS IS THE ISSUE
+		const FRotator NewRotation = FMath::Lerp(NewRotation, RightRotation, TurnProgress);
+		
+		SetActorRotation(NewRotation);
+		UE_LOG(LogTemp, Warning, TEXT("New Rotation: %s"), *NewRotation.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("RightRotation: %s"), *RightRotation.ToString());
 	}
+}
+
+void AGenericBoidAI::LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate)
+{
 }
 
 
@@ -134,6 +120,17 @@ void AGenericBoidAI::BeginPlay()
 	
 }
 
+void AGenericBoidAI::DelayedRotation()
+{
+	/*UE_LOG(LogTemp, Warning, TEXT("TurnRate: %d"), RightTurnRate);
+	// Once hit maximum turn rate return
+	if (RightTurnRate == 90)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(RotationTimerHandle);
+		return;
+	}*/
+}
+
 // Called every frame
 void AGenericBoidAI::Tick(float DeltaTime)
 {
@@ -141,9 +138,28 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	ForwardTrace();
 	ForwardMovement(NULL, DeltaTime, NULL);
-	//RightVectorMovement(NULL, DeltaTime);
+
+	if(TurnProgress < 1.0f)
+	{
+		RightVectorMovement(NULL, DeltaTime, NULL);
+	} 
 }
 
+
+
+/*// If traces fire off on right actor turns left
+		for (; Angle > 0; LeftTurnRate++)
+		{
+			const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
+			SetActorRotation(LeftRotation);
+			UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
+
+			// Once hit maximum turn rate return
+			if (RightTurnRate == 90)
+			{
+				return;
+			}
+		}*/
 
 
 

@@ -21,6 +21,7 @@ public:
 	// Sets default values for this character's properties
 	AGenericBoidAI();
 
+	
 	//Peripheral Vision
 	void ForwardTrace();
 
@@ -28,8 +29,10 @@ public:
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
 	// Turns the Actor Right
-	void RightVectorMovement(bool bTraceHit, float Tick);
+	void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
+	// Turns the Actor Left
+	void LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
 	
 	void Cohesion();
@@ -47,10 +50,29 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+	void DelayedRotation();
+	
+public:
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	FTimerHandle RotationTimerHandle;
 
+	// Starting Rotation of actor 
+	FRotator StartRotation = GetActorRotation();
+
+	// Target Rotation (90 Degrees)
+
+	const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
+
+	// The progress of the turn (0 to 1)
+	float TurnProgress = 0.f;
+	float RotationDelay = 4.f;
+	
+	int32 RightTurnRate = 0;
+	int32 LeftTurnRate = 0;
+	
 	bool bShouldStop;
 	bool bShouldTurn;
 };
