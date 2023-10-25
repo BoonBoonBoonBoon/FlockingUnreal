@@ -22,15 +22,19 @@ public:
 	AGenericBoidAI();
 
 	
-	//Peripheral Vision
+	// Creates Peripheral Vision
 	void ForwardTrace(float DeltaTime);
 
+	void CheckRotation(int32 Angle, float DeltaTime, bool bHit);
+	
 	// Moves the AI forward
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
 	// Turns the Actor Right
 	void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
+	void UpdateTraceRight(bool bTraceHit, float DeltaTime, int32 TurnRate);
+	
 	// Turns the Actor Left
 	void LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
@@ -58,7 +62,7 @@ protected:
 	FRotator GetBoidRotation(const AActor* Actor){return GetActorRotation(); }
 
 	// Setter for boid rotation
-	FRotator SetBoidRotation(const AActor* Actor){FRotator NewLoc = SetActorRotation();};
+	//FRotator SetBoidRotation(const FQuat* Rotation, ETeleportType Teleport){FRotator NewLoc = SetActorRotation(*Rotation,Teleport);};
 
 	
 public:
@@ -80,7 +84,11 @@ public:
 	
 	int32 RightTurnRate = 0;
 	int32 LeftTurnRate = 0;
+
+	bool bIsActorRotating = false;
 	
 	bool bShouldStop;
 	bool bShouldTurn;
 };
+
+

@@ -4,6 +4,7 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
+#include "GeometryTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -21,7 +22,8 @@ AGenericBoidAI::AGenericBoidAI()
     	HeadShape->SetupAttachment(Head);
 }
 
-// Peripheral Vision
+int bIsCurrentlyRotating;
+// Creates Peripheral Vision
 void AGenericBoidAI::ForwardTrace(float DeltaTime)
 {
 	// 90 Degree angle set Vector for every 10 degrees (-45 being left, 45 being right, and 10 being for every sector)
@@ -30,42 +32,46 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 	{
 		// Set the Vector rotation (Yaw) 
 		FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
-		
+
 		FHitResult Hit;
 		FVector StartLoc = GetActorLocation();
-		const float TraceDistance = 600.f;
+		constexpr float TraceDistance = 450.f;
 		const FCollisionQueryParams TraceParams;
 
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
 
-		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc,ECC_Visibility, TraceParams);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Visibility, TraceParams);
 		if (bHit)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
+			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
+			CheckRotation(Angle, DeltaTime, bHit);
+		}
+	}
+}
 
-			DrawDebugLine(GetWorld(), StartLoc, Endloc,
-			FColor::Red, false, -1, 0, 4);
-			
-			// If traces fire off on left actor turns right
-			// add separate bool
-			if(TurnProgress < 1.f){
-			for (; Angle < 0; RightTurnRate++)
+void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
+{
+	// If traces fire off on left actor turns right , add separate bool
+	if (TurnProgress < 1.f)
+	{
+		for (; Angle < 0; RightTurnRate++)
+		{
+			//bShouldTurn = true;
+			RightVectorMovement(bHit, DeltaTime, RightTurnRate);
+
+			if (RightTurnRate == 180)
 			{
-				bShouldTurn = true;
-				RightVectorMovement(bHit, DeltaTime, RightTurnRate);
-				//SetActorRotation(RightRotation);
-				//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
-				if (RightTurnRate == 180)
-				{
-					bShouldTurn = false;
-					//RightVectorMovement(bHit, NULL,NULL);
-					return;
-				}
-			}
+				//bShouldTurn = false;
+				return;
 			}
 		}
 	}
 }
+
+// This whole function is made to check if we are rotating,
+// if rotation is below 1 then we continue and return false 
+// if rotation is above 1 we return true
+
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
@@ -117,7 +123,6 @@ void AGenericBoidAI::LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 T
 
 		
 	}
-	
 }
 
 // Called when the game starts or when spawned
@@ -143,8 +148,12 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ForwardTrace(DeltaTime);
-		ForwardMovement(NULL, DeltaTime, bShouldTurn);
+	ForwardMovement(NULL, DeltaTime, bShouldTurn);
 }
+
+
+//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
+//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
 
 //FCollisionParameters::AddIgnoreActor(); Ignore Actor type
 		
