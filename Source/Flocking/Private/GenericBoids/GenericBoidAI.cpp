@@ -41,7 +41,7 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 	
 		FHitResult Hit;
 		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
-		constexpr float TraceDistance = 450.f;
+		constexpr float TraceDistance = 250.f;
 		FCollisionQueryParams TraceParams;
 		TraceParams.ClearIgnoredActors();
 		

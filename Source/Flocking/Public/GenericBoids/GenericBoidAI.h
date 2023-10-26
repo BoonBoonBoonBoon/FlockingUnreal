@@ -86,7 +86,7 @@ public:
 
 	// The progress of the turn (0 to 1)
 	float TurnAmount = 90.f;
-	float RotationSpeed = 0.5f;
+	float RotationSpeed = 0.8f;
 	
 	int32 RightTurnRate = 0;
 	int32 LeftTurnRate = 0;
