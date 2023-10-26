@@ -26,13 +26,19 @@ int bIsCurrentlyRotating;
 // Creates Peripheral Vision
 void AGenericBoidAI::ForwardTrace(float DeltaTime)
 {
+	// Get Actors Current rotation
+	FRotator ActorRotation = GetActorRotation();
+
 	// 90 Degree angle set Vector for every 10 degrees (-45 being left, 45 being right, and 10 being for every sector)
 	// Could use for cohesion and others too and set to 360 degrees 
 	for (int32 Angle = -45; Angle <= 45; Angle += 10)
 	{
 		// Set the Vector rotation (Yaw) 
-		FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
+		//FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
 
+		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
+		FVector DirectionVector = RotatedVector.Vector();
+	
 		FHitResult Hit;
 		FVector StartLoc = GetActorLocation();
 		constexpr float TraceDistance = 450.f;
@@ -61,7 +67,11 @@ void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
 
 			if (RightTurnRate == 180)
 			{
-				//bShouldTurn = false;
+				TurnProgress = 0;
+
+				// Go to new function which resets turn rate and turn progress to make it able to loop
+				
+				
 				return;
 			}
 		}
