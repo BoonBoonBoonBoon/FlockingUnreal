@@ -26,6 +26,8 @@ public:
 	void ForwardTrace(float DeltaTime);
 
 	void CheckRotation(int32 Angle, float DeltaTime, bool bHit);
+
+	void TurnVector(bool IsRight);
 	
 	// Moves the AI forward
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
@@ -33,6 +35,9 @@ public:
 	// Turns the Actor Right
 	void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
 
+
+
+	
 	void UpdateTraceRight(bool bTraceHit, float DeltaTime, int32 TurnRate);
 	
 	// Turns the Actor Left
@@ -65,6 +70,7 @@ protected:
 	//FRotator SetBoidRotation(const FQuat* Rotation, ETeleportType Teleport){FRotator NewLoc = SetActorRotation(*Rotation,Teleport);};
 
 	
+	
 public:
 	
 	// Called every frame
@@ -79,13 +85,16 @@ public:
 	const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
 
 	// The progress of the turn (0 to 1)
-	float TurnProgress = 0.f;
-	float RotationDelay = 10.f;
+	float TurnAmount = 90.f;
+	float RotationSpeed = 0.5f;
 	
 	int32 RightTurnRate = 0;
 	int32 LeftTurnRate = 0;
 
-	bool bIsActorRotating = false;
+	float StartingRot;
+	
+	bool bIsActiveRotating = false;
+	bool bIsRotatingRight = false;
 	
 	bool bShouldStop;
 	bool bShouldTurn;

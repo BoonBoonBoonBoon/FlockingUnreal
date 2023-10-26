@@ -40,17 +40,21 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 		FVector DirectionVector = RotatedVector.Vector();
 	
 		FHitResult Hit;
-		FVector StartLoc = GetActorLocation();
+		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
 		constexpr float TraceDistance = 450.f;
-		const FCollisionQueryParams TraceParams;
+		FCollisionQueryParams TraceParams;
+		TraceParams.ClearIgnoredActors();
+		
 
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
 
-		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Visibility, TraceParams);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
 		if (bHit)
 		{
 			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
-			CheckRotation(Angle, DeltaTime, bHit);
+			//CheckRotation(Angle, DeltaTime, bHit);
+			TurnVector(Angle < 0);
+			break;
 		}
 	}
 }
@@ -58,7 +62,7 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
 {
 	// If traces fire off on left actor turns right , add separate bool
-	if (TurnProgress < 1.f)
+	/*if (TurnProgress < 1.f)
 	{
 		for (; Angle < 0; RightTurnRate++)
 		{
@@ -67,7 +71,7 @@ void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
 
 			if (RightTurnRate == 180)
 			{
-				TurnProgress = 0;
+				//TurnProgress = 0;
 
 				// Go to new function which resets turn rate and turn progress to make it able to loop
 				
@@ -75,7 +79,16 @@ void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
 				return;
 			}
 		}
-	}
+	}*/
+}
+
+void AGenericBoidAI::TurnVector(bool IsRight)
+{
+	bIsActiveRotating = true;
+	bIsRotatingRight = IsRight;
+
+	StartingRot = GetActorRotation().Yaw;
+	
 }
 
 // This whole function is made to check if we are rotating,
@@ -105,7 +118,7 @@ void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float DeltaTime, int32 
 {
 	// Log the parameters using UE_LOG
 	//UE_LOG(LogTemp, Warning, TEXT("bTraceHit: %s, DeltaTime: %f, TurnRate: %d"), bTraceHit ? TEXT("True") : TEXT("False"), DeltaTime, TurnRate);
-	
+	/*
 	if(bTraceHit)
 	{
 		const FRotator RightRotation = FRotator(0, TurnRate, 0);
@@ -123,7 +136,7 @@ void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float DeltaTime, int32 
 		
 		//UE_LOG(LogTemp, Warning, TEXT("New Rotation: %s"), *NewRotation.ToString());
 		//UE_LOG(LogTemp, Warning, TEXT("RightRotation: %s"), *RightRotation.ToString());
-	}
+	}*/
 }
 
 void AGenericBoidAI::LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate)
@@ -143,13 +156,7 @@ void AGenericBoidAI::BeginPlay()
 
 void AGenericBoidAI::DelayedRotation()
 {
-	/*UE_LOG(LogTemp, Warning, TEXT("TurnRate: %d"), RightTurnRate);
-	// Once hit maximum turn rate return
-	if (RightTurnRate == 90)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(RotationTimerHandle);
-		return;
-	}*/
+
 }
 
 // Called every frame
@@ -159,6 +166,13 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	ForwardTrace(DeltaTime);
 	ForwardMovement(NULL, DeltaTime, bShouldTurn);
+
+	if (bIsActiveRotating)
+	{
+		int Direction = bIsRotatingRight ? 1 : -1;
+		AddActorWorldRotation(FRotator(0,  Direction * RotationSpeed, 0));
+		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
+	}
 }
 
 
