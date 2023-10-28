@@ -21,31 +21,21 @@ public:
 	// Sets default values for this character's properties
 	AGenericBoidAI();
 
+	TArray<AGenericBoidAI> Boids;
 	
-	// Creates Peripheral Vision
+	// Creates 90 Degree Peripheral vision with traces. 
 	void ForwardTrace(float DeltaTime);
-
-	void CheckRotation(int32 Angle, float DeltaTime, bool bHit);
-	
-	// Moves the AI forward
+	// Checks if the Boid is rotating.
+	void TurnVector(bool IsRight);
+	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
-
-	// Turns the Actor Right
-	void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
-
-	void UpdateTraceRight(bool bTraceHit, float DeltaTime, int32 TurnRate);
-	
-	// Turns the Actor Left
-	void LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
-
-	//***************** Make a controller for this 
 	
 	// Boids Steers to stay near other boids.
-	void Cohesion();
+	void Cohesion(TArray<AGenericBoidAI> Boids);
 	// Boids Steers to avoid collision with other boids.
-	void Alignment();
+	void Alignment(TArray<AGenericBoidAI> Boids);
 	// boids Steers toward the same direction as others.
-	void Seperation();
+	void Seperation(TArray<AGenericBoidAI> Boids);
 
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* Head;
@@ -56,14 +46,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void DelayedRotation();
-
 	// Getter for boid rotation 
 	FRotator GetBoidRotation(const AActor* Actor){return GetActorRotation(); }
 
 	// Setter for boid rotation
 	//FRotator SetBoidRotation(const FQuat* Rotation, ETeleportType Teleport){FRotator NewLoc = SetActorRotation(*Rotation,Teleport);};
 
+	
 	
 public:
 	
@@ -79,16 +68,24 @@ public:
 	const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
 
 	// The progress of the turn (0 to 1)
-	float TurnProgress = 0.f;
-	float RotationDelay = 10.f;
+	float TurnAmount = 90.f;
+	float RotationSpeed = 0.8f;
 	
 	int32 RightTurnRate = 0;
 	int32 LeftTurnRate = 0;
 
-	bool bIsActorRotating = false;
+	float StartingRot;
+	
+	bool bIsActiveRotating = false;
+	bool bIsRotatingRight = false;
 	
 	bool bShouldStop;
 	bool bShouldTurn;
 };
 
 
+//void CheckRotation(int32 Angle, float DeltaTime, bool bHit);
+
+// Turns the Actor Right
+//void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
+//	void UpdateTraceRight(bool bTraceHit, float DeltaTime, int32 TurnRate);
