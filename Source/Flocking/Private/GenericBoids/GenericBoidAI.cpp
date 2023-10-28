@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
 #include "GeometryTypes.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -19,6 +20,12 @@ AGenericBoidAI::AGenericBoidAI()
 
 	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
 	HeadShape->SetupAttachment(Head);
+
+	// Radius 
+	float R = 300.f;
+	//float MaxSpeed = 
+
+	
 }
 
 int bIsCurrentlyRotating;
@@ -63,6 +70,57 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 	}
 }
 
+void AGenericBoidAI::Radius(float DeltaTime)
+{
+	// Get Actors Current rotation
+	FRotator ActorRotation = GetActorRotation();
+
+	bool bHitSomething = false;
+	
+	// 90 Degree angle set Vector for every 10 degrees (-45 left, 45 right, and 10 for every Angle)
+	for (int32 Angle = -179; Angle <= 179; Angle += 20)
+	{
+		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
+		FVector DirectionVector = RotatedVector.Vector();
+
+		FHitResult Hit;
+		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
+		constexpr float TraceDistance = 400.f;
+		FCollisionQueryParams TraceParams;
+
+		// Ignore Self 
+		TraceParams.ClearIgnoredActors();
+
+
+		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
+		while (bHitSomething)
+		{
+			bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
+			if (bHit)
+			{
+				// Calculate the box's dimensions & Location
+				FVector BoxExtents(10.0f, 10.0f, 10.0f);
+				FVector BoxLocation = Endloc;
+				
+			
+				// Draw Debug Line
+				DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
+
+				// Draw the debug box
+				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
+				
+				// Adjust the end location to the hit location
+				Endloc = Hit.Location;
+				
+				bHitSomething = true; 
+			} else
+			{
+				break;
+			}
+		}
+	}
+}
+
 void AGenericBoidAI::TurnVector(bool IsRight)
 {
 	bIsActiveRotating = true;
@@ -75,7 +133,7 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 {
 	if (isTurning)
 	{
-		Speed = 400.f;
+		Speed = 200.f;
 	}
 	else if (!isTurning)
 	{
@@ -89,11 +147,34 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 	SetActorLocation(CurrentLocation);
 }
 
+void AGenericBoidAI::Acceleration(float DeltaTime)
+{
+	/*AGenericBoidAI* BoidAI = nullptr;
+	const FVector Accel = BoidAI->GetCharacterMovement()->GetCurrentAcceleration();
+	UE_LOG(LogTemp, Warning, TEXT("Acceleration: %s"), *Accel.ToString());*/
+
+	AActor* Boid = GetOwner();
+	// Calculate the new acceleration based on interpolation.
+	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationChangeSpeed);
+	// Print the values of CurrentAcceleration and Boid
+	UE_LOG(LogTemp, Warning, TEXT("CurrentAcceleration: %s"), *CurrentAcceleration.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Boid: %s"), *Boid->GetName());
+
+	// Apply new acceleration to actor.
+	Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+}
+
 
 // Called when the game starts or when spawned
 void AGenericBoidAI::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	TArray<AGenericBoidAI*> Boids;
+    
+	// Populate Boids array with other boids in the world
+
+	//Flock(Boids);
 }
 
 // Called every frame
@@ -101,16 +182,29 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ForwardTrace(DeltaTime);
-	ForwardMovement(NULL, DeltaTime, bShouldTurn);
+	//ForwardTrace(DeltaTime);
+	//Radius(DeltaTime);
+	Acceleration(DeltaTime);
 
+		
+	// Acceleration has something to do with the speed variable
+	// Is acceleration the same as velocity??
+	// Maybe use velocity instead > Since the actor will need to be able to slow down and increase speed when its near to its traces object.. .. .
+	
+	//ForwardMovement(NULL, DeltaTime, true);
+
+	
 	// Checks for active rotation.
-	if (bIsActiveRotating)
+	/*if (bIsActiveRotating)
 	{
+		//ForwardMovement(NULL, DeltaTime, true);
 		int Direction = bIsRotatingRight ? 1 : -1;
 		AddActorWorldRotation(FRotator(0, Direction * RotationSpeed, 0));
 		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
-	}
+	}else
+	{
+		//ForwardMovement(NULL, DeltaTime, false);
+	}*/
 }
 
 

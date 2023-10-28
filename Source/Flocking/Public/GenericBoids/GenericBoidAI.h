@@ -21,21 +21,37 @@ public:
 	// Sets default values for this character's properties
 	AGenericBoidAI();
 
-	TArray<AGenericBoidAI> Boids;
+	//TArray<AGenericBoidAI> Boids;
 	
 	// Creates 90 Degree Peripheral vision with traces. 
 	void ForwardTrace(float DeltaTime);
+
+	void Radius(float DeltaTime);
+	
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight);
+	
 	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
+
+	// Controls the Boids Current Acceleration & Deceleration 
+	void Acceleration(float DeltaTime);
+
+	// Acceleration Boid wants to reach
+	FVector TargetAcceleration = FVector(100.0f, 0.0f, 0.0f);
+	
+	// Stored for Interpolation between current & Target (ZeroVector Sets all values to zero)
+	FVector CurrentAcceleration = FVector::ZeroVector;
+
+	// The value of what the acceleration speed will increase by
+	float AccelerationChangeSpeed = 5.f;
 	
 	// Boids Steers to stay near other boids.
-	void Cohesion(TArray<AGenericBoidAI> Boids);
+	//void Cohesion(TArray<AGenericBoidAI> Boids);
 	// Boids Steers to avoid collision with other boids.
-	void Alignment(TArray<AGenericBoidAI> Boids);
+	//void Alignment(TArray<AGenericBoidAI> Boids);
 	// boids Steers toward the same direction as others.
-	void Seperation(TArray<AGenericBoidAI> Boids);
+	//void Seperation(TArray<AGenericBoidAI> Boids);
 
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* Head;
@@ -49,30 +65,25 @@ protected:
 	// Getter for boid rotation 
 	FRotator GetBoidRotation(const AActor* Actor){return GetActorRotation(); }
 
-	// Setter for boid rotation
-	//FRotator SetBoidRotation(const FQuat* Rotation, ETeleportType Teleport){FRotator NewLoc = SetActorRotation(*Rotation,Teleport);};
-
-	
-	
 public:
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	FTimerHandle RotationTimerHandle;
+	//FTimerHandle RotationTimerHandle;
 
 	// Starting Rotation of actor 
 	FRotator StartRotation = GetActorRotation();
 
 	// Target Rotation (90 Degrees)
-	const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
+	//const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
 
 	// The progress of the turn (0 to 1)
 	float TurnAmount = 90.f;
 	float RotationSpeed = 0.8f;
 	
-	int32 RightTurnRate = 0;
-	int32 LeftTurnRate = 0;
+	//int32 RightTurnRate = 0;
+	//int32 LeftTurnRate = 0;
 
 	float StartingRot;
 	
