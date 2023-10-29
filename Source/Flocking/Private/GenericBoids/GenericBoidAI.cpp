@@ -85,29 +85,30 @@ void AGenericBoidAI::TurnVector(bool IsRight)
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	if (isTurning)
+	/*if (isTurning)
 	{
-		Speed = 200.f;
+		Acceleration(DeltaTime);
+		//Speed = 200.f;
 	}
 	else if (!isTurning)
 	{
-		Speed = 200.f;
-	}
+		Acceleration(DeltaTime);
+		//Speed = 200.f;
+	}*/
+
+	Acceleration(DeltaTime,isTurning);
+	
 	// Where Actor currently is 
 	FVector CurrentLocation = GetActorLocation();
 	// adds the forward vector which is multiplied by the speed and the tick
 	
 	// Destination //
-	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
+	CurrentLocation += GetActorForwardVector() * TargetSpeed * DeltaTime;
 	// Sets its new location
 	SetActorLocation(CurrentLocation);
 }
 
-void AGenericBoidAI::GetVelocity()
-{
-}
-
-void AGenericBoidAI::Acceleration(float DeltaTime)
+void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 {
 	/*AGenericBoidAI* BoidAI = nullptr;
 	const FVector Accel = BoidAI->GetCharacterMovement()->GetCurrentAcceleration();
@@ -115,19 +116,36 @@ void AGenericBoidAI::Acceleration(float DeltaTime)
 
 	AActor* Boid = GetOwner();
 	// Calculate the new acceleration based on interpolation.
-	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationChangeSpeed);
+	//CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationChangeSpeed);
 	// Print the values of CurrentAcceleration and Boid
-	UE_LOG(LogTemp, Warning, TEXT("CurrentAcceleration: %s"), *CurrentAcceleration.ToString());
-	UE_LOG(LogTemp, Warning, TEXT("Boid: %s"), *Boid->GetName());
+	
+	//UE_LOG(LogTemp, Warning, TEXT("Boid: %s"), *Boid->GetName());
 
 	// Apply new acceleration to actor.
 	//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+
+
+	if(isTurning)
+	{
+		//  Decrease Acceleration and speed for turning 
+		CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, TurnDecelerationRate);
+		UE_LOG(LogTemp, Warning, TEXT("TurnDecelerationRate: %s"), *CurrentAcceleration.ToString());
+	} else
+	{
+		// increase acceleration and speed when not turning 
+		CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationRate);
+		UE_LOG(LogTemp, Warning, TEXT("AccelerationRate: %s"), *CurrentAcceleration.ToString());
+	}
+	
+	Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+
+	
 }
 
 
 // Called when the game starts or when spawned
 void AGenericBoidAI::BeginPlay()
-{
+{ 
 	Super::BeginPlay();
 	
 	TArray<AGenericBoidAI*> Boids;
@@ -144,7 +162,7 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	ForwardTrace(DeltaTime);
 	//Radius(DeltaTime);
-	Acceleration(DeltaTime);
+	//Acceleration(DeltaTime, );
 
 		
 	// Acceleration has something to do with the speed variable

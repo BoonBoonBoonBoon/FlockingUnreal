@@ -37,16 +37,27 @@ public:
 	void GetVelocity();
 	
 	// Controls the Boids Current Acceleration & Deceleration 
-	void Acceleration(float DeltaTime);
+	void Acceleration(float DeltaTime, bool isTurning);
 
+	// Target Speed 
+	float TargetSpeed = 200.f;
+	
 	// Acceleration Boid wants to reach
 	FVector TargetAcceleration = FVector(300.0f, 0.0f, 0.0f);
 	
 	// Stored for Interpolation between current & Target (ZeroVector Sets all values to zero)
 	FVector CurrentAcceleration = FVector::ZeroVector;
+
+	float AccelerationRate = 100.f;
+
+	float TurnDecelerationRate = 300.f;
+
+
+
+
 	
 	// The value of what the acceleration speed will increase by
-	float AccelerationChangeSpeed = 0.5f;
+	//float AccelerationChangeSpeed = 0.5f;
 	
 	// Boids Steers to stay near other boids.
 	//void Cohesion(TArray<AGenericBoidAI> Boids);
