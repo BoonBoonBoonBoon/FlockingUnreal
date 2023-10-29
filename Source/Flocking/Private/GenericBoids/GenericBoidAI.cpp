@@ -70,56 +70,10 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 	}
 }
 
-void AGenericBoidAI::Radius(float DeltaTime)
+/*void AGenericBoidAI::Radius(float DeltaTime)
 {
-	// Get Actors Current rotation
-	FRotator ActorRotation = GetActorRotation();
-
-	bool bHitSomething = false;
 	
-	// 90 Degree angle set Vector for every 10 degrees (-45 left, 45 right, and 10 for every Angle)
-	for (int32 Angle = -179; Angle <= 179; Angle += 20)
-	{
-		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
-		FVector DirectionVector = RotatedVector.Vector();
-
-		FHitResult Hit;
-		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
-		constexpr float TraceDistance = 400.f;
-		FCollisionQueryParams TraceParams;
-
-		// Ignore Self 
-		TraceParams.ClearIgnoredActors();
-
-
-		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
-		while (bHitSomething)
-		{
-			bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
-			if (bHit)
-			{
-				// Calculate the box's dimensions & Location
-				FVector BoxExtents(10.0f, 10.0f, 10.0f);
-				FVector BoxLocation = Endloc;
-				
-			
-				// Draw Debug Line
-				DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
-
-				// Draw the debug box
-				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
-				
-				// Adjust the end location to the hit location
-				Endloc = Hit.Location;
-				
-				bHitSomething = true; 
-			} else
-			{
-				break;
-			}
-		}
-	}
-}
+}*/
 
 void AGenericBoidAI::TurnVector(bool IsRight)
 {
@@ -142,9 +96,15 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 	// Where Actor currently is 
 	FVector CurrentLocation = GetActorLocation();
 	// adds the forward vector which is multiplied by the speed and the tick
+	
+	// Destination //
 	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
 	// Sets its new location
 	SetActorLocation(CurrentLocation);
+}
+
+void AGenericBoidAI::GetVelocity()
+{
 }
 
 void AGenericBoidAI::Acceleration(float DeltaTime)
@@ -161,7 +121,7 @@ void AGenericBoidAI::Acceleration(float DeltaTime)
 	UE_LOG(LogTemp, Warning, TEXT("Boid: %s"), *Boid->GetName());
 
 	// Apply new acceleration to actor.
-	Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+	//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
 }
 
 
@@ -182,7 +142,7 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//ForwardTrace(DeltaTime);
+	ForwardTrace(DeltaTime);
 	//Radius(DeltaTime);
 	Acceleration(DeltaTime);
 
@@ -195,16 +155,16 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	
 	// Checks for active rotation.
-	/*if (bIsActiveRotating)
+	if (bIsActiveRotating)
 	{
-		//ForwardMovement(NULL, DeltaTime, true);
+		ForwardMovement(NULL, DeltaTime, true);
 		int Direction = bIsRotatingRight ? 1 : -1;
 		AddActorWorldRotation(FRotator(0, Direction * RotationSpeed, 0));
 		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
 	}else
 	{
-		//ForwardMovement(NULL, DeltaTime, false);
-	}*/
+		ForwardMovement(NULL, DeltaTime, false);
+	}
 }
 
 

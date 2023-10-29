@@ -34,17 +34,19 @@ public:
 	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
+	void GetVelocity();
+	
 	// Controls the Boids Current Acceleration & Deceleration 
 	void Acceleration(float DeltaTime);
 
 	// Acceleration Boid wants to reach
-	FVector TargetAcceleration = FVector(100.0f, 0.0f, 0.0f);
+	FVector TargetAcceleration = FVector(300.0f, 0.0f, 0.0f);
 	
 	// Stored for Interpolation between current & Target (ZeroVector Sets all values to zero)
 	FVector CurrentAcceleration = FVector::ZeroVector;
-
+	
 	// The value of what the acceleration speed will increase by
-	float AccelerationChangeSpeed = 5.f;
+	float AccelerationChangeSpeed = 0.5f;
 	
 	// Boids Steers to stay near other boids.
 	//void Cohesion(TArray<AGenericBoidAI> Boids);
