@@ -22,30 +22,31 @@ AGenericBoidAI::AGenericBoidAI()
 	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
 	HeadShape->SetupAttachment(Head);
 
-	// Radius 
-	float R = 300.f;
-	//float MaxSpeed = 
+	
 }
 
-int bIsCurrentlyRotating;
+
 // Creates Peripheral Vision
 void AGenericBoidAI::ForwardTrace(float DeltaTime)
 {
-	// Get Actors Current rotation
+	// Initializers 
 	FRotator ActorRotation = GetActorRotation();
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
 
 	// 90 Degree angle set Vector for every 10 degrees (-45 left, 45 right, and 10 for every Angle)
 	for (int32 Angle = -100; Angle <= 100; Angle += 5)
 	{
+		// Gets the rotation for the boid 
 		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
+		// Defines that the movement vector can only rotate on the yaw axis
 		FVector DirectionVector = RotatedVector.Vector();
-
-		FHitResult Hit;
+		// Sets the line-trace slightly in-front of the Boid to not hit-itself
 		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
 		float TraceDistance = 250.f;
-		FCollisionQueryParams TraceParams;
-		TraceParams.ClearIgnoredActors();
-		
+
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
 
 		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
@@ -53,22 +54,63 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 		{
 			// Calculate the distance to the hit object
 			float DistanceToObstacle = (Hit.ImpactPoint - StartLoc).Size();
+
 			// Calculate the box's dimensions & Location
 			FVector BoxExtents(10.0f, 10.0f, 10.0f);
 			FVector BoxLocation = Endloc;
-	
-			// Draw Debug Line
-			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
-			// Draw the debug box
-			DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
-			// update the line trace with a new start location or distance
-		
 			
+			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
+			DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
+
+			// update the line trace with a new start location or distance
 			TurnVector(Angle < 0, DistanceToObstacle);
 			break;
 		}
+	}
+}
+
+void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
+{
+	// Initializers 
+	
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
+	int32 CurTrace = 50;
+	float RadiusRange = 200;
+	
+	// Loops the traces around the body of the boid
+	for (int32 i = 0; i < CurTrace; i++)
+	{
+		// Creates a Circle Angle 
+		float Angle = 300.0f * i / CurTrace;
 		
+		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
+		// Gets the rotation for the boid 
+		FRotator Rotation(0, Angle, 0);
+		FVector DirectionVector = Rotation.Vector();
+		float TraceDistance = RadiusRange;
+
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
+		FVector EndLoc = StartLoc + DirectionVector * TraceDistance;
 		
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Camera, TraceParams);
+		
+		// Shows the hit marker
+		if (bHit)
+		{
+			// Calculate the box's dimensions & Location
+			FVector BoxExtents(10.0f, 10.0f, 10.0f);
+			FVector BoxLocation = EndLoc;
+			
+			// Draw a persistent debug line
+			if (GEngine)
+			{
+				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
+				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
+				break;
+			}
+		}
 	}
 }
 
@@ -101,13 +143,11 @@ void AGenericBoidAI::TurnVector(bool IsRight, float DistanceToObj)
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	
-	//Acceleration(DeltaTime,isTurning);
 	// Where Actor currently is 
 	FVector CurrentLocation = GetActorLocation();
 	// Destination 
 	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
-	UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), Speed);
+	//UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), Speed);
 	
 	// Sets its new location
 	SetActorLocation(CurrentLocation);
@@ -150,6 +190,7 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	ForwardTrace(DeltaTime);
+	RadiusCohTrace(50, 200);
 	
 	// Checks for active rotation.
 	if (bIsActiveRotating)

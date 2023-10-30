@@ -26,7 +26,7 @@ public:
 	// Creates 90 Degree Peripheral vision with traces. 
 	void ForwardTrace(float DeltaTime);
 
-	void Radius(float DeltaTime);
+	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
 	
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);
@@ -37,12 +37,11 @@ public:
 	
 	/////// New Vars and functs 
 	void Seek(FVector Target);
-
 	float MaxSpeed = 200.f;
 	FVector Velocity = FVector::ZeroVector;
 	FVector Accel = FVector::ZeroVector;
 	void ApplyForce(FVector Force);
-	
+	///////////
 
 	
 	
