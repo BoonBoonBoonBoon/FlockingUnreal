@@ -34,7 +34,17 @@ public:
 	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
 
-	void GetVelocity();
+	
+	/////// New Vars and functs 
+	void Seek(FVector Target);
+
+	float MaxSpeed = 200.f;
+	FVector Velocity = FVector::ZeroVector;
+	FVector Accel = FVector::ZeroVector;
+	void ApplyForce(FVector Force);
+	
+
+	
 	
 	// Controls the Boids Current Acceleration & Deceleration 
 	void Acceleration(float DeltaTime, bool isTurning);

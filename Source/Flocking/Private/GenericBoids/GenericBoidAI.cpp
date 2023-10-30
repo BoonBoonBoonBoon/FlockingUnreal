@@ -4,6 +4,7 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
+#include "Math/Vector.h"
 #include "GeometryTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -24,8 +25,6 @@ AGenericBoidAI::AGenericBoidAI()
 	// Radius 
 	float R = 300.f;
 	//float MaxSpeed = 
-
-	
 }
 
 int bIsCurrentlyRotating;
@@ -36,7 +35,7 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 	FRotator ActorRotation = GetActorRotation();
 
 	// 90 Degree angle set Vector for every 10 degrees (-45 left, 45 right, and 10 for every Angle)
-	for (int32 Angle = -45; Angle <= 45; Angle += 10)
+	for (int32 Angle = -100; Angle <= 100; Angle += 5)
 	{
 		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
 		FVector DirectionVector = RotatedVector.Vector();
@@ -46,8 +45,7 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 		constexpr float TraceDistance = 250.f;
 		FCollisionQueryParams TraceParams;
 		TraceParams.ClearIgnoredActors();
-
-
+		
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
 
 		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
@@ -64,67 +62,65 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 			// Draw the debug box
 			DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
 			
-			TurnVector(Angle < 0);
+			//TurnVector(Angle < 0);
 			break;
 		}
 	}
 }
 
-/*void AGenericBoidAI::Radius(float DeltaTime)
-{
-	
-}*/
-
-void AGenericBoidAI::TurnVector(bool IsRight)
+/*void AGenericBoidAI::TurnVector(bool IsRight)
 {
 	bIsActiveRotating = true;
 	bIsRotatingRight = IsRight;
 
 	StartingRot = GetActorRotation().Yaw;
-}
+}*/
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	/*if (isTurning)
-	{
-		Acceleration(DeltaTime);
-		//Speed = 200.f;
-	}
-	else if (!isTurning)
-	{
-		Acceleration(DeltaTime);
-		//Speed = 200.f;
-	}*/
 
-	Acceleration(DeltaTime,isTurning);
+	Velocity += Accel * DeltaTime;
+
+	Velocity = FVector::VectorPlaneProject(Velocity, FVector::UpVector);
+	Velocity = FVector::GetClampedToSize(Velocity, MaxSpeed);
 	
+	FVector NewLocation = GetActorLocation() + Velocity * DeltaTime;
+	SetActorLocation(NewLocation);
+
+	Accel = FVector::ZeroVector;
+
+	
+	/*Acceleration(DeltaTime,isTurning);
 	// Where Actor currently is 
 	FVector CurrentLocation = GetActorLocation();
-	// adds the forward vector which is multiplied by the speed and the tick
-	
-	// Destination //
+	// Destination 
 	CurrentLocation += GetActorForwardVector() * TargetSpeed * DeltaTime;
 	// Sets its new location
-	SetActorLocation(CurrentLocation);
+	SetActorLocation(CurrentLocation);*/
+}
+
+void AGenericBoidAI::Seek(FVector Target)
+{
+
+	FVector DesiredLoc = Target - GetActorLocation();
+	DesiredLoc.Normalize();
+	DesiredLoc *= MaxSpeed;
+
+	FVector Steer = DesiredLoc - Velocity;
+
+	ApplyForce(Steer);
+}
+
+void AGenericBoidAI::ApplyForce(FVector Force)
+{
+	Accel += Force;
 }
 
 void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 {
-	/*AGenericBoidAI* BoidAI = nullptr;
-	const FVector Accel = BoidAI->GetCharacterMovement()->GetCurrentAcceleration();
-	UE_LOG(LogTemp, Warning, TEXT("Acceleration: %s"), *Accel.ToString());*/
-
+	/*
 	AActor* Boid = GetOwner();
-	// Calculate the new acceleration based on interpolation.
-	//CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationChangeSpeed);
-	// Print the values of CurrentAcceleration and Boid
 	
-	//UE_LOG(LogTemp, Warning, TEXT("Boid: %s"), *Boid->GetName());
-
-	// Apply new acceleration to actor.
-	//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
-
-
 	if(isTurning)
 	{
 		//  Decrease Acceleration and speed for turning 
@@ -136,10 +132,9 @@ void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 		CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationRate);
 		UE_LOG(LogTemp, Warning, TEXT("AccelerationRate: %s"), *CurrentAcceleration.ToString());
 	}
+	*/
 	
-	Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
-
-	
+	//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
 }
 
 
@@ -149,18 +144,28 @@ void AGenericBoidAI::BeginPlay()
 	Super::BeginPlay();
 	
 	TArray<AGenericBoidAI*> Boids;
-    
 	// Populate Boids array with other boids in the world
-
 	//Flock(Boids);
+	
 }
 
 // Called every frame
 void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	ForwardTrace(DeltaTime);
+
+	FVector TargetLoc = GetActorLocation();
+	// Destination 
+	TargetLoc += GetActorForwardVector();
+	Seek(TargetLoc);
+	
+	ForwardMovement(NULL, DeltaTime, true);
+
+	
+
+
+	
 	//Radius(DeltaTime);
 	//Acceleration(DeltaTime, );
 
@@ -173,7 +178,7 @@ void AGenericBoidAI::Tick(float DeltaTime)
 
 	
 	// Checks for active rotation.
-	if (bIsActiveRotating)
+	/*if (bIsActiveRotating)
 	{
 		ForwardMovement(NULL, DeltaTime, true);
 		int Direction = bIsRotatingRight ? 1 : -1;
@@ -182,5 +187,5 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	}else
 	{
 		ForwardMovement(NULL, DeltaTime, false);
-	}
+	}*/
 }
