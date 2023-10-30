@@ -29,7 +29,7 @@ public:
 	void Radius(float DeltaTime);
 	
 	// Checks if the Boid is rotating.
-	void TurnVector(bool IsRight);
+	void TurnVector(bool IsRight, float DistanceToObj);
 	
 	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);

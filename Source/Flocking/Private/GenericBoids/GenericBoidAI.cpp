@@ -42,7 +42,7 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 
 		FHitResult Hit;
 		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
-		constexpr float TraceDistance = 250.f;
+		float TraceDistance = 250.f;
 		FCollisionQueryParams TraceParams;
 		TraceParams.ClearIgnoredActors();
 		
@@ -51,90 +51,87 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
 		if (bHit)
 		{
-			
+			// Calculate the distance to the hit object
+			float DistanceToObstacle = (Hit.ImpactPoint - StartLoc).Size();
 			// Calculate the box's dimensions & Location
 			FVector BoxExtents(10.0f, 10.0f, 10.0f);
 			FVector BoxLocation = Endloc;
-
+	
 			// Draw Debug Line
 			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
-
 			// Draw the debug box
 			DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
+			// update the line trace with a new start location or distance
+		
 			
-			//TurnVector(Angle < 0);
+			TurnVector(Angle < 0, DistanceToObstacle);
 			break;
 		}
+		
+		
 	}
 }
 
-/*void AGenericBoidAI::TurnVector(bool IsRight)
+void AGenericBoidAI::TurnVector(bool IsRight, float DistanceToObj)
 {
+	
 	bIsActiveRotating = true;
 	bIsRotatingRight = IsRight;
 
 	StartingRot = GetActorRotation().Yaw;
-}*/
+	if (bIsActiveRotating)
+	{
+		constexpr float MaxSpeedToObj = 200.f;
+		constexpr float MinSpeedToObj = 50.f;
+
+		// Return a percentile value between 0 and 1
+		float SpeedMultiplier = FMath::GetMappedRangeValueClamped(FVector2d(0.0f, DistanceToObj), FVector2D(1.0f, 0.0f), DistanceToObj);
+		// Clamps the speed from 0 to 1 
+		SpeedMultiplier = FMath::Clamp(SpeedMultiplier, 0.0f, 1.0f);
+		// Interpolates the speed values and its change 
+		const float NewSpeed = FMath::Lerp(MaxSpeedToObj, MinSpeedToObj, SpeedMultiplier);
+
+		// Assign New Values 
+		TargetSpeed = NewSpeed;
+	} else
+	{
+		TargetSpeed = MaxSpeed;
+	}
+}
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-
-	Velocity += Accel * DeltaTime;
-
-	Velocity = FVector::VectorPlaneProject(Velocity, FVector::UpVector);
-	Velocity = FVector::GetClampedToSize(Velocity, MaxSpeed);
 	
-	FVector NewLocation = GetActorLocation() + Velocity * DeltaTime;
-	SetActorLocation(NewLocation);
-
-	Accel = FVector::ZeroVector;
-
-	
-	/*Acceleration(DeltaTime,isTurning);
+	//Acceleration(DeltaTime,isTurning);
 	// Where Actor currently is 
 	FVector CurrentLocation = GetActorLocation();
 	// Destination 
-	CurrentLocation += GetActorForwardVector() * TargetSpeed * DeltaTime;
+	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
+	UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), Speed);
+	
 	// Sets its new location
-	SetActorLocation(CurrentLocation);*/
+	SetActorLocation(CurrentLocation);
 }
 
 void AGenericBoidAI::Seek(FVector Target)
 {
 
-	FVector DesiredLoc = Target - GetActorLocation();
+	/*FVector DesiredLoc = Target - GetActorLocation();
 	DesiredLoc.Normalize();
 	DesiredLoc *= MaxSpeed;
 
 	FVector Steer = DesiredLoc - Velocity;
 
-	ApplyForce(Steer);
+	ApplyForce(Steer);*/
 }
 
 void AGenericBoidAI::ApplyForce(FVector Force)
 {
-	Accel += Force;
+	//Accel += Force;
 }
 
 void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 {
-	/*
-	AActor* Boid = GetOwner();
-	
-	if(isTurning)
-	{
-		//  Decrease Acceleration and speed for turning 
-		CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, TurnDecelerationRate);
-		UE_LOG(LogTemp, Warning, TEXT("TurnDecelerationRate: %s"), *CurrentAcceleration.ToString());
-	} else
-	{
-		// increase acceleration and speed when not turning 
-		CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationRate);
-		UE_LOG(LogTemp, Warning, TEXT("AccelerationRate: %s"), *CurrentAcceleration.ToString());
-	}
-	*/
-	
-	//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
 }
 
 
@@ -146,7 +143,6 @@ void AGenericBoidAI::BeginPlay()
 	TArray<AGenericBoidAI*> Boids;
 	// Populate Boids array with other boids in the world
 	//Flock(Boids);
-	
 }
 
 // Called every frame
@@ -154,38 +150,65 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	ForwardTrace(DeltaTime);
-
-	FVector TargetLoc = GetActorLocation();
-	// Destination 
-	TargetLoc += GetActorForwardVector();
-	Seek(TargetLoc);
-	
-	ForwardMovement(NULL, DeltaTime, true);
-
-	
-
-
-	
-	//Radius(DeltaTime);
-	//Acceleration(DeltaTime, );
-
-		
-	// Acceleration has something to do with the speed variable
-	// Is acceleration the same as velocity??
-	// Maybe use velocity instead > Since the actor will need to be able to slow down and increase speed when its near to its traces object.. .. .
-	
-	//ForwardMovement(NULL, DeltaTime, true);
-
 	
 	// Checks for active rotation.
-	/*if (bIsActiveRotating)
+	if (bIsActiveRotating)
 	{
-		ForwardMovement(NULL, DeltaTime, true);
+		ForwardMovement(TargetSpeed, DeltaTime, true);
 		int Direction = bIsRotatingRight ? 1 : -1;
 		AddActorWorldRotation(FRotator(0, Direction * RotationSpeed, 0));
 		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
 	}else
 	{
-		ForwardMovement(NULL, DeltaTime, false);
-	}*/
+		ForwardMovement(TargetSpeed, DeltaTime, false);
+	}
 }
+
+
+
+/*Velocity += Accel * DeltaTime;
+
+Velocity = FVector::VectorPlaneProject(Velocity, FVector::UpVector);
+Velocity = FVector::GetClampedToSize(Velocity, MaxSpeed);
+
+FVector NewLocation = GetActorLocation() + Velocity * DeltaTime;
+SetActorLocation(NewLocation);
+
+Accel = FVector::ZeroVector;*/
+
+
+
+/*
+AActor* Boid = GetOwner();
+
+if(isTurning)
+{
+	//  Decrease Acceleration and speed for turning 
+	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, TurnDecelerationRate);
+	UE_LOG(LogTemp, Warning, TEXT("TurnDecelerationRate: %s"), *CurrentAcceleration.ToString());
+} else
+{
+	// increase acceleration and speed when not turning 
+	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationRate);
+	UE_LOG(LogTemp, Warning, TEXT("AccelerationRate: %s"), *CurrentAcceleration.ToString());
+}
+*/
+	
+//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+
+
+
+/*FVector TargetLoc = GetActorLocation();
+// Destination 
+TargetLoc += GetActorForwardVector();
+Seek(TargetLoc);*/
+	
+//ForwardMovement(NULL, DeltaTime, true);
+	
+//Radius(DeltaTime);
+//Acceleration(DeltaTime, );
+	
+// Acceleration has something to do with the speed variable
+// Is acceleration the same as velocity??
+// Maybe use velocity instead > Since the actor will need to be able to slow down and increase speed when its near to its traces object.. .. 
+	
