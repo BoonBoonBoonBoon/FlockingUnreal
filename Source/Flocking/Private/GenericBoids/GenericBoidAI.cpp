@@ -21,7 +21,6 @@ AGenericBoidAI::AGenericBoidAI()
 
 	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
 	HeadShape->SetupAttachment(Head);
-
 	
 }
 
@@ -109,10 +108,25 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 			{
 				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
+				
+				
+				while(bHit)
+				{
+					// Call the weight and input the incoming weight from the other boid 
+					//CohWeight();
+				}
 				break;
 			}
 		}
 	}
+}
+
+void AGenericBoidAI::CohWeight(float Weight)
+{
+	
+// check chat
+
+	
 }
 
 void AGenericBoidAI::TurnVector(bool IsRight, float DistanceToObj)
@@ -154,22 +168,7 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 	SetActorLocation(CurrentLocation);
 }
 
-void AGenericBoidAI::Seek(FVector Target)
-{
 
-	/*FVector DesiredLoc = Target - GetActorLocation();
-	DesiredLoc.Normalize();
-	DesiredLoc *= MaxSpeed;
-
-	FVector Steer = DesiredLoc - Velocity;
-
-	ApplyForce(Steer);*/
-}
-
-void AGenericBoidAI::ApplyForce(FVector Force)
-{
-	//Accel += Force;
-}
 
 void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 {
@@ -181,9 +180,18 @@ void AGenericBoidAI::BeginPlay()
 { 
 	Super::BeginPlay();
 	
-	TArray<AGenericBoidAI*> Boids;
-	// Populate Boids array with other boids in the world
-	//Flock(Boids);
+	// Psudeo Code 
+	
+	for (AGenericBoidAI* Actor : BoidArray)
+	{
+		if (Actor && Actor->IsValidLowLevel())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
+			// You can print more information about the actor if needed.
+		}
+	}
+				
+	
 }
 
 // Called every frame
@@ -206,6 +214,24 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	}
 }
 
+
+
+/*void AGenericBoidAI::Seek(FVector Target)
+{
+
+	/*FVector DesiredLoc = Target - GetActorLocation();
+	DesiredLoc.Normalize();
+	DesiredLoc *= MaxSpeed;
+
+	FVector Steer = DesiredLoc - Velocity;
+
+	ApplyForce(Steer);#1#
+}
+
+void AGenericBoidAI::ApplyForce(FVector Force)
+{
+	//Accel += Force;
+}*/
 
 
 /*Velocity += Accel * DeltaTime;

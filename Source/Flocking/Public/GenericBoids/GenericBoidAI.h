@@ -26,8 +26,24 @@ public:
 	// Creates 90 Degree Peripheral vision with traces. 
 	void ForwardTrace(float DeltaTime);
 
+
+	/////// COHESION 
 	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
+
+	// Stores Actors refrences 
+	TArray<AGenericBoidAI*> BoidArray;
+
+
 	
+	// Weight of a independent boid 
+	float CurrentWeight = 1.f;
+	float MaxWeight;
+	// The Increase of weight from local Boids 
+	float WeightIncease = 0.25f;
+
+	void CohWeight(float Weight);
+	
+	////////////////////////
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);
 	
@@ -42,7 +58,7 @@ public:
 	FVector Accel = FVector::ZeroVector;
 	void ApplyForce(FVector Force);
 	///////////
-
+	
 	
 	
 	// Controls the Boids Current Acceleration & Deceleration 
