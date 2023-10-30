@@ -72,24 +72,25 @@ void AGenericBoidAI::ForwardTrace(float DeltaTime)
 void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 {
 	// Initializers 
-	
+	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
 	FHitResult Hit;
 	FCollisionQueryParams TraceParams;
 	TraceParams.ClearIgnoredActors();
-	int32 CurTrace = 50;
-	float RadiusRange = 200;
+	TraceParams.AddIgnoredActor(this);
+	//int32 CurTrace = 50;
+	//float RadiusRange = 200;
 	
 	// Loops the traces around the body of the boid
-	for (int32 i = 0; i < CurTrace; i++)
+	for (int32 i = 0; i < NumTraces; i++)
 	{
 		// Creates a Circle Angle 
-		float Angle = 300.0f * i / CurTrace;
-		
-		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
+		float Angle = 360.0f * i / NumTraces;
+			
+	
 		// Gets the rotation for the boid 
 		FRotator Rotation(0, Angle, 0);
 		FVector DirectionVector = Rotation.Vector();
-		float TraceDistance = RadiusRange;
+		float TraceDistance = RadiusCoh;
 
 		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
 		FVector EndLoc = StartLoc + DirectionVector * TraceDistance;
@@ -190,7 +191,7 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	ForwardTrace(DeltaTime);
-	RadiusCohTrace(50, 200);
+	RadiusCohTrace(50, 250);
 	
 	// Checks for active rotation.
 	if (bIsActiveRotating)
