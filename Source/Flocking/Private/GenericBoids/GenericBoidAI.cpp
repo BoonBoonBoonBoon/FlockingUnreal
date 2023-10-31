@@ -191,22 +191,24 @@ void AGenericBoidAI::BeginPlay()
 	{
 		if (Actor && Actor->IsValidLowLevel())
 		{
-			//BoidWeightMap[Actor];
-			if (BoidWeightMap.Contains(Actor))
-		{
-			float Weight = BoidWeightMap[Actor];
-			UE_LOG(LogTemp, Warning, TEXT("Actor's Weight: %f"), Weight);
-		}
-		else
+			//BoidWeightMap.Add(Actor, DefaultWeight);
+			for (TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
+			{
+				
+				UE_LOG(LogTemp, Warning, TEXT("Actor: %s, Weight: %f"), *Actor->GetName(), Weight);
+			}
+
+
+
+			
+		/*else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Actor not found in the map."));
 		}
 			///UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
 			// You can print more information about the actor if needed.
-		}
+		}*/
 	}
-
-	
 }
 
 // Called every frame
