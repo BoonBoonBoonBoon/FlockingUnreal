@@ -22,6 +22,9 @@ AGenericBoidAI::AGenericBoidAI()
 	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
 	HeadShape->SetupAttachment(Head);
 	
+	
+	
+	
 }
 
 
@@ -109,13 +112,12 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
 				
-				
 				while(bHit)
 				{
 					// Call the weight and input the incoming weight from the other boid 
 					//CohWeight();
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -148,11 +150,12 @@ void AGenericBoidAI::TurnVector(bool IsRight, float DistanceToObj)
 		// Interpolates the speed values and its change 
 		const float NewSpeed = FMath::Lerp(MaxSpeedToObj, MinSpeedToObj, SpeedMultiplier);
 
+		// BREAKING ENGINE 
 		// Assign New Values 
-		TargetSpeed = NewSpeed;
+		//TargetSpeed = NewSpeed;
 	} else
 	{
-		TargetSpeed = MaxSpeed;
+		//TargetSpeed = MaxSpeed;
 	}
 }
 
@@ -179,18 +182,30 @@ void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 void AGenericBoidAI::BeginPlay()
 { 
 	Super::BeginPlay();
+
+	//UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), CurrentWeight);
 	
-	// Psudeo Code 
-	
+	// Psudeo Code
+	BoidArray.AddUnique(this);
 	for (AGenericBoidAI* Actor : BoidArray)
 	{
 		if (Actor && Actor->IsValidLowLevel())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
+			//BoidWeightMap[Actor];
+			if (BoidWeightMap.Contains(Actor))
+		{
+			float Weight = BoidWeightMap[Actor];
+			UE_LOG(LogTemp, Warning, TEXT("Actor's Weight: %f"), Weight);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Actor not found in the map."));
+		}
+			///UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
 			// You can print more information about the actor if needed.
 		}
 	}
-				
+
 	
 }
 

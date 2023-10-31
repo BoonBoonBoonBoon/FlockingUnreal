@@ -30,14 +30,17 @@ public:
 	/////// COHESION 
 	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
 
-	// Stores Actors refrences 
+	// Stores Actors references 
 	TArray<AGenericBoidAI*> BoidArray;
-
-
+	
+	// TMap is a key,value; pair. Similar to an array however instead of one object you can store pairs of data
+	// I.e Actor, float = GenericBoid, 4; Data Structure little bit like a struct.
+	TMap<AGenericBoidAI*, float> BoidWeightMap;
 	
 	// Weight of a independent boid 
-	float CurrentWeight = 1.f;
-	float MaxWeight;
+	float DefaultWeight = 1.f;
+	
+	float CurrentWeight; 
 	// The Increase of weight from local Boids 
 	float WeightIncease = 0.25f;
 
