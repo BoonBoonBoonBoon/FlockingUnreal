@@ -78,21 +78,9 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
 	FHitResult Hit;
 	FCollisionQueryParams TraceParams;
-	
-	//TraceParams.AddIgnoredActors();
-	//TraceParams.ClearIgnoredActors();
+	TraceParams.ClearIgnoredActors();
 	TraceParams.AddIgnoredActor(this);
 
-	UWorld* World = GetWorld();
-	for(TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)
-	{
-		
-		//TraceParams.AddIgnoredActors(ActorItr);
-	}
-	
-
-	
-	
 	// Loops the traces around the body of the boid
 	for (int32 i = 0; i < NumTraces; i++)
 	{
@@ -144,8 +132,15 @@ void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 // When a boid enters the range of a certain boid both their weight will increase, then decrease when they leave
 // use clamp maybe? but the weight doesnt need to have a maximum as it can allways increase with the more ai
 // need return specific ai being HIT
+	AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
 	
-	UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), DefaultWeight);
+	if(BoidActor)
+	{
+		
+		
+		UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), DefaultWeight);
+	}
+	
 
 	
 }
@@ -203,12 +198,13 @@ void AGenericBoidAI::BeginPlay()
 	Super::BeginPlay();
 	
 	
-	//AGenericBoidAI* Boid = NewObject<AGenericBoidAI>();
 
 	// Assign the boid to currect actor
 	AGenericBoidAI* Boid = this;
+	
 	// Add the actor and default weight 
 	BoidWeightMap.Add(Boid, DefaultWeight);
+	
 	// iterates through the key-value pairs in TMap
 	// Use the TPair template as a pointer to the Pair variable
 	// The pair variable will serve as a reference to each of the the key-value pairs in the map
@@ -218,7 +214,6 @@ void AGenericBoidAI::BeginPlay()
 		Boid = Pair.Key;
 		// Extract the value and store it in the actor
 		DefaultWeight = Pair.Value;
-		
 		//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *Boid->GetName(), DefaultWeight);
 	}
 	
