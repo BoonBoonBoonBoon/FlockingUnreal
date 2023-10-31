@@ -4,6 +4,7 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
+#include "EngineUtils.h"
 #include "Math/Vector.h"
 #include "Engine/StaticMeshActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -77,17 +78,18 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
 	FHitResult Hit;
 	FCollisionQueryParams TraceParams;
-
 	
 	//TraceParams.AddIgnoredActors();
 	//TraceParams.ClearIgnoredActors();
 	TraceParams.AddIgnoredActor(this);
 
-	// Ignore Static Mesh Actors 
-	for (AActor* Actor : ActorsToIgnore)
+	UWorld* World = GetWorld();
+	for(TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)
 	{
-		TraceParams.AddIgnoredActor(Actor);
+		
+		//TraceParams.AddIgnoredActors(ActorItr);
 	}
+	
 
 	
 	

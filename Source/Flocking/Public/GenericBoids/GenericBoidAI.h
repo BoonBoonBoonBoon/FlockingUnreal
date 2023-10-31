@@ -46,7 +46,6 @@ public:
 	float WeightIncease = 0.25f;
 
 	void CohWeight(AActor* ActorHit, float Weight);
-	TArray<AActor*> ActorsToIgnore;
 	////////////////////////
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);
