@@ -45,8 +45,8 @@ public:
 	// The Increase of weight from local Boids 
 	float WeightIncease = 0.25f;
 
-	void CohWeight(float Weight);
-	
+	void CohWeight(AActor* ActorHit, float Weight);
+	TArray<AActor*> ActorsToIgnore;
 	////////////////////////
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);

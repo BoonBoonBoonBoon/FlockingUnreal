@@ -5,7 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
 #include "Math/Vector.h"
-#include "GeometryTypes.h"
+#include "Engine/StaticMeshActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -77,18 +77,26 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
 	FHitResult Hit;
 	FCollisionQueryParams TraceParams;
-	TraceParams.ClearIgnoredActors();
+
+	
+	//TraceParams.AddIgnoredActors();
+	//TraceParams.ClearIgnoredActors();
 	TraceParams.AddIgnoredActor(this);
-	//int32 CurTrace = 50;
-	//float RadiusRange = 200;
+
+	// Ignore Static Mesh Actors 
+	for (AActor* Actor : ActorsToIgnore)
+	{
+		TraceParams.AddIgnoredActor(Actor);
+	}
+
+	
 	
 	// Loops the traces around the body of the boid
 	for (int32 i = 0; i < NumTraces; i++)
 	{
 		// Creates a Circle Angle 
 		float Angle = 360.0f * i / NumTraces;
-			
-	
+		
 		// Gets the rotation for the boid 
 		FRotator Rotation(0, Angle, 0);
 		FVector DirectionVector = Rotation.Vector();
@@ -109,13 +117,18 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 			// Draw a persistent debug line
 			if (GEngine)
 			{
+				
 				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
 				
 				while(bHit)
 				{
+					
+					AActor* BoidCurrentlyHit = Hit.GetActor();
+					//TraceParams.AddIgnoredActor(StatActor);
+					
 					// Call the weight and input the incoming weight from the other boid 
-					//CohWeight();
+					CohWeight(BoidCurrentlyHit,NULL);
 					break;
 				}
 			}
@@ -123,10 +136,14 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 	}
 }
 
-void AGenericBoidAI::CohWeight(float Weight)
+void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 {
-	
 // check chat
+// When a boid enters the range of a certain boid both their weight will increase, then decrease when they leave
+// use clamp maybe? but the weight doesnt need to have a maximum as it can allways increase with the more ai
+// need return specific ai being HIT
+	
+	UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), DefaultWeight);
 
 	
 }
@@ -182,10 +199,28 @@ void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 void AGenericBoidAI::BeginPlay()
 { 
 	Super::BeginPlay();
-
-	//UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), CurrentWeight);
 	
-	// Psudeo Code
+	
+	//AGenericBoidAI* Boid = NewObject<AGenericBoidAI>();
+
+	// Assign the boid to currect actor
+	AGenericBoidAI* Boid = this;
+	// Add the actor and default weight 
+	BoidWeightMap.Add(Boid, DefaultWeight);
+	// iterates through the key-value pairs in TMap
+	// Use the TPair template as a pointer to the Pair variable
+	// The pair variable will serve as a reference to each of the the key-value pairs in the map
+	for (const TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
+	{
+		// Extract the key from the pair and store it in the actor
+		Boid = Pair.Key;
+		// Extract the value and store it in the actor
+		DefaultWeight = Pair.Value;
+		
+		//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *Boid->GetName(), DefaultWeight);
+	}
+	
+	/*
 	BoidArray.AddUnique(this);
 	for (AGenericBoidAI* Actor : BoidArray)
 	{
@@ -197,10 +232,7 @@ void AGenericBoidAI::BeginPlay()
 				
 				UE_LOG(LogTemp, Warning, TEXT("Actor: %s, Weight: %f"), *Actor->GetName(), Weight);
 			}
-
-
-
-			
+			*/
 		/*else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Actor not found in the map."));
@@ -208,7 +240,7 @@ void AGenericBoidAI::BeginPlay()
 			///UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
 			// You can print more information about the actor if needed.
 		}*/
-	}
+	//}
 }
 
 // Called every frame
