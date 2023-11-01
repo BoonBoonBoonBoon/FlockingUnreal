@@ -4,11 +4,8 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
-#include "EngineUtils.h"
 #include "Math/Vector.h"
-#include "Engine/StaticMeshActor.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/KismetMathLibrary.h"
+
 
 
 // Sets default values
@@ -22,10 +19,6 @@ AGenericBoidAI::AGenericBoidAI()
 
 	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
 	HeadShape->SetupAttachment(Head);
-	
-	
-	
-	
 }
 
 
@@ -135,13 +128,11 @@ void AGenericBoidAI::RadiusCohMovement()
 
 void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 {
-// check chat
-// When a boid enters the range of a certain boid both their weight will increase, then decrease when they leave
-// use clamp maybe? but the weight doesnt need to have a maximum as it can always increase with the more ai
-// need return specific ai being HIT
 	AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
 	if(BoidActor)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("BoidActor: %s"), BoidActor ? TEXT("true") : TEXT("false"));
+		
 		// iterates through the key-value pairs in TMap
 		// Use the TPair template as a pointer to the Pair variable
 		// The pair variable will serve as a reference to each of the the key-value pairs in the map
@@ -151,11 +142,9 @@ void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 			BoidActor = Pair.Key;
 			// Extract the value and store it in the actor
 			CurrentWeight = Pair.Value;
-
-			/*For(int i = 1; )
-			{
-				
-			}*/
+			
+			UE_LOG(LogTemp, Warning, TEXT("Current Weight: %d"), CurrentWeight); // Returns ZERO 
+			
 
 			/// PSudeo
 			/// Get the actors currently being hit
@@ -166,16 +155,20 @@ void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 			/// if an indiviual actor is hitting 2 boids then the said actors value will increase to (1.5f)
 			/// We also need a way for the values to decrease when the actors arent being hit anymore.
 
+
+			// Does not reach stack????????
 			// Go through a loop where we get the current weight, the amount of actors being hit and increasing the weight until i is equal to the number of actors.
 			for (int i = DefaultWeight; DefaultWeight < BoidWeightMap.Num(); i++)
 			{
 				// we then assign the value to a new variable
 				CurrentWeight = i;
-				
-				
+
+				// Said boid found a boid with a high weight to follow
+				bFoundBoidTofollow = true;
+				UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
 			}
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
+		//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
 	}
 }
 
@@ -274,14 +267,27 @@ void AGenericBoidAI::Tick(float DeltaTime)
 	// Checks for active rotation.
 	if (bIsActiveRotating)
 	{
-		ForwardMovement(TargetSpeed, DeltaTime, true);
+		if(bFoundBoidTofollow)
+		{
+			RadiusCohMovement();
+		} else 
+		{
+			ForwardMovement(TargetSpeed, DeltaTime, true);
+		}
 		int Direction = bIsRotatingRight ? 1 : -1;
 		AddActorWorldRotation(FRotator(0, Direction * RotationSpeed, 0));
 		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
 	}else
 	{
-		ForwardMovement(TargetSpeed, DeltaTime, false);
+		if(bFoundBoidTofollow)
+		{
+			RadiusCohMovement();
+		} else 
+		{
+			ForwardMovement(TargetSpeed, DeltaTime, true);
+		}
 	}
+	//UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
 }
 
 

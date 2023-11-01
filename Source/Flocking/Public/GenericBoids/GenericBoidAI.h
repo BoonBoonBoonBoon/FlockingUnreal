@@ -48,6 +48,8 @@ public:
 	float WeightIncease = 0.25f;
 
 	void CohWeight(AActor* ActorHit, float Weight);
+
+	bool bFoundBoidTofollow = false;
 	////////////////////////////////////////////////////////////////////////////
 
 
