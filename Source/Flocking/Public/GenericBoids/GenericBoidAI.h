@@ -27,9 +27,11 @@ public:
 	void ForwardTrace(float DeltaTime);
 
 
-	/////// COHESION 
+	/////// COHESION /////////////////////////////////////////////////////////////////
 	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
-
+	// Overrides the movement pattern to follow the boid with the highest weight
+	void RadiusCohMovement();
+	
 	// Creates a empty Array that will store refrences to Boids 
 	TArray<AGenericBoidAI*> BoidArray;
 
@@ -46,7 +48,10 @@ public:
 	float WeightIncease = 0.25f;
 
 	void CohWeight(AActor* ActorHit, float Weight);
-	////////////////////////
+	////////////////////////////////////////////////////////////////////////////
+
+
+	
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);
 	
@@ -135,9 +140,3 @@ public:
 	bool bShouldTurn;
 };
 
-
-//void CheckRotation(int32 Angle, float DeltaTime, bool bHit);
-
-// Turns the Actor Right
-//void RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate);
-//	void UpdateTraceRight(bool bTraceHit, float DeltaTime, int32 TurnRate);
