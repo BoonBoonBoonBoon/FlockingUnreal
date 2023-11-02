@@ -13,25 +13,19 @@ class FLOCKING_API AGenericBoidAI : public ACharacter
 	GENERATED_BODY()
 
 public:
-
-	// TODO Get the steering sorted
-	// after that setup the velocity and deceleration
-	// once movement it set, move onto the cohesion func
-	
 	// Sets default values for this character's properties
 	AGenericBoidAI();
-
-	//TArray<AGenericBoidAI> Boids;
 	
 	// Creates 90 Degree Peripheral vision with traces. 
 	void ForwardTrace(float DeltaTime);
 
 
-	/////// COHESION /////////////////////////////////////////////////////////////////
+	/////// COHESION //////////////////////////////////////////////////////////////////
 	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
 	// Overrides the movement pattern to follow the boid with the highest weight
 	void RadiusCohMovement();
 	
+	void CohWeight(AActor* ActorHit, float Weight);
 	// Creates a empty Array that will store refrences to Boids 
 	TArray<AGenericBoidAI*> BoidArray;
 
@@ -42,65 +36,48 @@ public:
 	
 	// Weight of a independent boid 
 	float DefaultWeight = 1.f;
+	float CurrentWeight;
 	
-	float CurrentWeight; 
 	// The Increase of weight from local Boids 
 	float WeightIncease = 0.25f;
-
-	void CohWeight(AActor* ActorHit, float Weight);
-
 	bool bFoundBoidTofollow = false;
-	////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+
+///////////////////SEPARATION////////////////////////////////////////////////////
+
+	void RadiusSepTrace(int32 NumTraces, float RadiusSep);
+	
 
 
+
+///////////////////////////////////////////////////////////////////////////////////
 	
 	// Checks if the Boid is rotating.
 	void TurnVector(bool IsRight, float DistanceToObj);
-	
 	// Moves the AI forward.
 	void ForwardMovement(float Speed, float DeltaTime, bool isTurning);
-
 	
-	/////// New Vars and functs 
+	/////// ACCELERATION///////////////////////////////////////////////////////////////
 	void Seek(FVector Target);
 	float MaxSpeed = 200.f;
 	FVector Velocity = FVector::ZeroVector;
 	FVector Accel = FVector::ZeroVector;
 	void ApplyForce(FVector Force);
-	///////////
-	
-	
-	
 	// Controls the Boids Current Acceleration & Deceleration 
 	void Acceleration(float DeltaTime, bool isTurning);
-
 	// Target Speed 
 	float TargetSpeed = 200.f;
-	
 	// Acceleration Boid wants to reach
 	FVector TargetAcceleration = FVector(300.0f, 0.0f, 0.0f);
-	
 	// Stored for Interpolation between current & Target (ZeroVector Sets all values to zero)
 	FVector CurrentAcceleration = FVector::ZeroVector;
-
 	float AccelerationRate = 100.f;
-
 	float TurnDecelerationRate = 300.f;
-
-
-
-
-	
+		
 	// The value of what the acceleration speed will increase by
 	//float AccelerationChangeSpeed = 0.5f;
+	///////////////////////////////////////////////////////////////////////////////////////
 	
-	// Boids Steers to stay near other boids.
-	//void Cohesion(TArray<AGenericBoidAI> Boids);
-	// Boids Steers to avoid collision with other boids.
-	//void Alignment(TArray<AGenericBoidAI> Boids);
-	// boids Steers toward the same direction as others.
-	//void Seperation(TArray<AGenericBoidAI> Boids);
-
 	UPROPERTY(EditAnywhere)
 	class USphereComponent* Head;
 	UPROPERTY(EditAnywhere)
@@ -118,21 +95,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	//FTimerHandle RotationTimerHandle;
-
 	// Starting Rotation of actor 
 	FRotator StartRotation = GetActorRotation();
-
-	// Target Rotation (90 Degrees)
-	//const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
-
+	
 	// The progress of the turn (0 to 1)
 	float TurnAmount = 90.f;
 	float RotationSpeed = 0.8f;
 	
-	//int32 RightTurnRate = 0;
-	//int32 LeftTurnRate = 0;
-
 	float StartingRot;
 	
 	bool bIsActiveRotating = false;

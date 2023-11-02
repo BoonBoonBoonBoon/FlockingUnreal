@@ -101,7 +101,7 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 			if (GEngine)
 			{
 				
-				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
+				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Blue, false, -1, 0, 2);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
 				
 				while(bHit)
@@ -129,7 +129,7 @@ void AGenericBoidAI::RadiusCohMovement()
 void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 {
 	AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
-	if(BoidActor)
+	if(BoidActor && BoidWeightMap.Contains(BoidActor))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("BoidActor: %s"), BoidActor ? TEXT("true") : TEXT("false"));
 		
@@ -139,13 +139,10 @@ void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 		for (const TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
 		{
 			// Extract the key from the pair and store it in the actor
-			BoidActor = Pair.Key;
+			//BoidActor = Pair.Key;
 			// Extract the value and store it in the actor
-			CurrentWeight = Pair.Value;
+			//CurrentWeight = Pair.Value;
 			
-			UE_LOG(LogTemp, Warning, TEXT("Current Weight: %d"), CurrentWeight); // Returns ZERO 
-			
-
 			/// PSudeo
 			/// Get the actors currently being hit
 			/// we get the actors key and value, that are being hit.
@@ -155,20 +152,67 @@ void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 			/// if an indiviual actor is hitting 2 boids then the said actors value will increase to (1.5f)
 			/// We also need a way for the values to decrease when the actors arent being hit anymore.
 
-
+			float inc = BoidWeightMap[BoidActor] += WeightIncease;
+			UE_LOG(LogTemp, Warning, TEXT("Updated Weight for Actor %s: %f"), *BoidActor->GetName(), inc);
+			
 			// Does not reach stack????????
 			// Go through a loop where we get the current weight, the amount of actors being hit and increasing the weight until i is equal to the number of actors.
-			for (int i = DefaultWeight; DefaultWeight < BoidWeightMap.Num(); i++)
+			/*for (int i = DefaultWeight; DefaultWeight < BoidWeightMap.Num(); i++)
 			{
 				// we then assign the value to a new variable
 				CurrentWeight = i;
-
+				UE_LOG(LogTemp, Warning, TEXT("Current Weight: %f"), CurrentWeight);
 				// Said boid found a boid with a high weight to follow
 				bFoundBoidTofollow = true;
 				UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
 			}
+		}*/
+			//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
 		}
-		//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
+	}
+}
+
+void AGenericBoidAI::RadiusSepTrace(int32 NumTraces, float RadiusSep)
+{
+	// Initializers 
+	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
+	TraceParams.AddIgnoredActor(this);
+
+	// Loops the traces around the body of the boid
+	for (int32 i = 0; i < NumTraces; i++)
+	{
+		// Creates a Circle Angle 
+		float Angle = 360.0f * i / NumTraces;
+		
+		// Gets the rotation for the boid 
+		FRotator Rotation(0, Angle, 0);
+		FVector DirectionVector = Rotation.Vector();
+		float TraceDistance = RadiusSep;
+
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
+		FVector EndLoc = StartLoc + DirectionVector * TraceDistance;
+		
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Camera, TraceParams);
+		
+		// Shows the hit marker
+		if (bHit)
+		{
+			// Calculate the box's dimensions & Location
+			FVector BoxExtents(10.0f, 10.0f, 10.0f);
+			FVector BoxLocation = EndLoc;
+			
+			// Draw a persistent debug line
+			if (GEngine)
+			{
+				
+				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
+				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Green, false, -1, 0, 4);
+				
+			}
+		}
 	}
 }
 
@@ -206,8 +250,6 @@ void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurnin
 	FVector CurrentLocation = GetActorLocation();
 	// Destination 
 	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
-	//UE_LOG(LogTemp, Warning, TEXT("Speed: %f"), Speed);
-	
 	// Sets its new location
 	SetActorLocation(CurrentLocation);
 }
@@ -224,15 +266,11 @@ void AGenericBoidAI::BeginPlay()
 { 
 	Super::BeginPlay();
 	
-	
-
 	// Assign the boid to currect actor
 	AGenericBoidAI* Boid = this;
 	
 	// Add the actor and default weight 
 	BoidWeightMap.Add(Boid, DefaultWeight);
-	
-
 	
 	/*
 	BoidArray.AddUnique(this);
@@ -262,8 +300,8 @@ void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	ForwardTrace(DeltaTime);
-	RadiusCohTrace(50, 300);
-	
+	RadiusCohTrace(30, 300);
+	RadiusSepTrace(30, 220);
 	// Checks for active rotation.
 	if (bIsActiveRotating)
 	{
@@ -287,7 +325,6 @@ void AGenericBoidAI::Tick(float DeltaTime)
 			ForwardMovement(TargetSpeed, DeltaTime, true);
 		}
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
 }
 
 
