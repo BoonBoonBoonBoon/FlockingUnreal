@@ -7,6 +7,9 @@
 #include "GameFramework/Character.h"
 #include "GenericBoidAI.generated.h"
 
+// Name, DataType, Name, DataType, Name, objectPtrDataType, Name
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCohesionHit, AGenericBoidAI*, Subject, AGenericBoidAI*, Object, bool, Hit);
+
 UCLASS()
 class FLOCKING_API AGenericBoidAI : public ACharacter
 {
@@ -21,26 +24,37 @@ public:
 
 
 	/////// COHESION //////////////////////////////////////////////////////////////////
+	// Radius for Cohesion.
 	void RadiusCohTrace(int32 NumTraces, float RadiusCoh);
 	// Overrides the movement pattern to follow the boid with the highest weight
 	void RadiusCohMovement();
-	
+	// Weight Calculation 
 	void CohWeight(AActor* ActorHit, float Weight);
+
+	// Call back to return the head of flock.
+	void OnCohesionHitCallBack(AGenericBoidAI* Subject, AGenericBoidAI* Object, bool Hit);
+	
 	// Creates a empty Array that will store refrences to Boids 
 	TArray<AGenericBoidAI*> BoidArray;
 
 	// Creates an empty TMap that will store the key of type Boid, And a float value. 
 	// TMap is a key,value; pair. Similar to an array however instead of one object you can store pairs of data
 	// I.e Actor, float = GenericBoid, 4; Data Structure little bit like a struct.
-	TMap<AGenericBoidAI*, float> BoidWeightMap;
+	TMap<AGenericBoidAI*, bool> Connections;
 	
 	// Weight of a independent boid 
 	float DefaultWeight = 1.f;
-	float CurrentWeight;
+	float CurrentWeight = 1.f;
 	
 	// The Increase of weight from local Boids 
 	float WeightIncease = 0.25f;
 	bool bFoundBoidTofollow = false;
+
+	// Cohesion Delegate
+	UPROPERTY(BlueprintAssignable)
+	FOnCohesionHit OnCohesionHit;
+
+	AGenericBoidAI* CurrentFollowBoid = nullptr;
 	//////////////////////////////////////////////////////////////////////////////
 
 ///////////////////SEPARATION////////////////////////////////////////////////////
@@ -110,4 +124,3 @@ public:
 	bool bShouldStop;
 	bool bShouldTurn;
 };
-

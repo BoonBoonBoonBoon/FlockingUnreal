@@ -4,6 +4,8 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
+#include "Interfaces/ITargetDevice.h"
+#include "Kismet/GameplayStatics.h"
 #include "Math/Vector.h"
 
 
@@ -100,86 +102,87 @@ void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 			// Draw a persistent debug line
 			if (GEngine)
 			{
-				
 				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Blue, false, -1, 0, 2);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
-				
-				while(bHit)
+				AActor* BoidCurrentlyHit = Hit.GetActor();
+				AGenericBoidAI* Other = Cast<AGenericBoidAI>(BoidCurrentlyHit);
+
+				if (Other)
 				{
-					
-					AActor* BoidCurrentlyHit = Hit.GetActor();
-					//TraceParams.AddIgnoredActor(StatActor);
-					
-					// Call the weight and input the incoming weight from the other boid 
-					CohWeight(BoidCurrentlyHit,NULL);
-					break;
-				}
+					OnCohesionHit.Broadcast(this, Other, true);
+					OnCohesionHitCallBack(this, Other, true);
+				}	
+
+				// Call the weight and input the incoming weight from the other boid 
+				//CohWeight(BoidCurrentlyHit,NULL);
+				
 			}
 		}
 	}
-}
-
-void AGenericBoidAI::TurnVector(bool IsRight)
-{
-	bIsActiveRotating = true;
-	bIsRotatingRight = IsRight;
-
-	StartingRot = GetActorRotation().Yaw;
-	
 }
 
 // Follows the boid with the highest weight 
 void AGenericBoidAI::RadiusCohMovement()
 {
-
+	/// PSudeo
+	/// Get the actors currently being hit
+	/// we get the actors key and value, that are being hit.
+	/// for each actor being hit, we want to increase their value by a specific amount (0.25f)
+	/// This increases by how many actors are being currently hit I.E. if default value is (1f)
+	/// and the increase value is (0.25f) for one actor being hit both of their values increase to (1.25f)
+	/// if an indiviual actor is hitting 2 boids then the said actors value will increase to (1.5f)
+	/// We also need a way for the values to decrease when the actors arent being hit anymore.
 	
 }
 
 void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
 {
-	AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
-	if(BoidActor && BoidWeightMap.Contains(BoidActor))
+
+
+	/*AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
+	if(BoidActor && Connections.Contains(BoidActor))
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("BoidActor: %s"), BoidActor ? TEXT("true") : TEXT("false"));
-		
 		// iterates through the key-value pairs in TMap
 		// Use the TPair template as a pointer to the Pair variable
 		// The pair variable will serve as a reference to each of the the key-value pairs in the map
-		for (const TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
-		{
-			// Extract the key from the pair and store it in the actor
-			//BoidActor = Pair.Key;
-			// Extract the value and store it in the actor
-			//CurrentWeight = Pair.Value;
-			
-			/// PSudeo
-			/// Get the actors currently being hit
-			/// we get the actors key and value, that are being hit.
-			/// for each actor being hit, we want to increase their value by a specific amount (0.25f)
-			/// This increases by how many actors are being currently hit I.E. if default value is (1f)
-			/// and the increase value is (0.25f) for one actor being hit both of their values increase to (1.25f)
-			/// if an indiviual actor is hitting 2 boids then the said actors value will increase to (1.5f)
-			/// We also need a way for the values to decrease when the actors arent being hit anymore.
-
-			float inc = BoidWeightMap[BoidActor] += WeightIncease;
-			UE_LOG(LogTemp, Warning, TEXT("Updated Weight for Actor %s: %f"), *BoidActor->GetName(), inc);
-			
-			// Does not reach stack????????
-			// Go through a loop where we get the current weight, the amount of actors being hit and increasing the weight until i is equal to the number of actors.
-			/*for (int i = DefaultWeight; DefaultWeight < BoidWeightMap.Num(); i++)
-			{
-				// we then assign the value to a new variable
-				CurrentWeight = i;
-				UE_LOG(LogTemp, Warning, TEXT("Current Weight: %f"), CurrentWeight);
-				// Said boid found a boid with a high weight to follow
-				bFoundBoidTofollow = true;
-				UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
-			}
-		}*/
-			//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
-		}
-	}
+		for (const TPair<AGenericBoidAI*, bool>& Pair : Connections)
+		{}}*/
 }
+
+
+
+void AGenericBoidAI::OnCohesionHitCallBack(AGenericBoidAI* Subject, AGenericBoidAI* Object, bool Hit)
+{
+	// Check if the Subject exists in the Connections map and if its weight is greater
+	// than the currentFollowBoid's weight.
+
+	AGenericBoidAI* Other = Subject == this ? Object : Object == this ? Subject : nullptr;
+	if (!Other) return;
+	
+	// if said actor is subject or object, then we pass subject into the tmap which is hit
+	Connections[Other] = Hit;
+	
+	TArray<AActor*> OutActors;
+	// Then get all actors in world
+	UGameplayStatics::GetAllActorsOfClass(this, AGenericBoidAI::StaticClass(), OutActors);
+
+	CurrentWeight = 1.f;
+	// Go through all actors which are boids
+	for (AActor* Boid : OutActors)
+	{
+		// Cast the actors to Boids, which changes increases the current weight.
+		AGenericBoidAI* GBoid = Cast<AGenericBoidAI>(Boid);
+		if (Connections.Contains(GBoid) && Connections[GBoid] == true) CurrentWeight += WeightIncease;
+	}
+	
+	// Follow insturctions
+	if(!CurrentFollowBoid || (Connections[Other] == true && Other->CurrentWeight > CurrentFollowBoid->CurrentWeight))
+	{
+		CurrentFollowBoid = Other;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("CurrentFollowBoid updated to: %s"), *CurrentFollowBoid->GetName());
+}
+
 
 void AGenericBoidAI::RadiusSepTrace(int32 NumTraces, float RadiusSep)
 {
@@ -276,10 +279,17 @@ void AGenericBoidAI::BeginPlay()
 	Super::BeginPlay();
 	
 	// Assign the boid to currect actor
-	AGenericBoidAI* Boid = this;
+	//AGenericBoidAI* Boid = this;
+
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(this, AGenericBoidAI::StaticClass(), OutActors);
+	for (AActor* Boid : OutActors)
+	{
+		if (Boid != this) Connections.Add(Cast<AGenericBoidAI>(Boid), false);
+	}
 	
 	// Add the actor and default weight 
-	BoidWeightMap.Add(Boid, DefaultWeight);
+	//BoidWeightMap.Add(Boid, DefaultWeight);
 	
 	/*
 	BoidArray.AddUnique(this);
