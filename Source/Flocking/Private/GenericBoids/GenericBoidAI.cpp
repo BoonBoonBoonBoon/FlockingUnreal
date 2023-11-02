@@ -4,82 +4,119 @@
 #include "GenericBoids/GenericBoidAI.h"
 #include "DrawDebugHelpers.h"
 #include "CollisionQueryParams.h"
-#include "GeometryTypes.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "Math/Vector.h"
 
 
 
 // Sets default values
 AGenericBoidAI::AGenericBoidAI()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-		Head=CreateDefaultSubobject<USphereComponent>("HeadComp");
-    	Head->SetupAttachment(RootComponent);
-    
-    	HeadShape=CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
-    	HeadShape->SetupAttachment(Head);
+	Head = CreateDefaultSubobject<USphereComponent>("HeadComp");
+	Head->SetupAttachment(RootComponent);
+
+	HeadShape = CreateDefaultSubobject<UStaticMeshComponent>("HeadShape");
+	HeadShape->SetupAttachment(Head);
 }
 
-int bIsCurrentlyRotating;
+
 // Creates Peripheral Vision
 void AGenericBoidAI::ForwardTrace(float DeltaTime)
 {
-	// Get Actors Current rotation
+	// Initializers 
 	FRotator ActorRotation = GetActorRotation();
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
 
-	// 90 Degree angle set Vector for every 10 degrees (-45 being left, 45 being right, and 10 being for every sector)
-	// Could use for cohesion and others too and set to 360 degrees 
-	for (int32 Angle = -45; Angle <= 45; Angle += 10)
+	// 90 Degree angle set Vector for every 10 degrees (-45 left, 45 right, and 10 for every Angle)
+	for (int32 Angle = -100; Angle <= 100; Angle += 5)
 	{
-		// Set the Vector rotation (Yaw) 
-		//FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
-
+		// Gets the rotation for the boid 
 		FRotator RotatedVector = ActorRotation + FRotator(0, Angle, 0);
+		// Defines that the movement vector can only rotate on the yaw axis
 		FVector DirectionVector = RotatedVector.Vector();
-	
-		FHitResult Hit;
+		// Sets the line-trace slightly in-front of the Boid to not hit-itself
 		FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 70);
-		constexpr float TraceDistance = 250.f;
-		FCollisionQueryParams TraceParams;
-		TraceParams.ClearIgnoredActors();
-		
+		float TraceDistance = 250.f;
 
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
 		FVector Endloc = StartLoc + DirectionVector * TraceDistance;
 
 		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Camera, TraceParams);
 		if (bHit)
 		{
+			// Calculate the distance to the hit object
+			float DistanceToObstacle = (Hit.ImpactPoint - StartLoc).Size();
+
+			// Calculate the box's dimensions & Location
+			FVector BoxExtents(10.0f, 10.0f, 10.0f);
+			FVector BoxLocation = Endloc;
+			
 			DrawDebugLine(GetWorld(), StartLoc, Endloc, FColor::Red, false, -1, 0, 4);
-			//CheckRotation(Angle, DeltaTime, bHit);
-			TurnVector(Angle < 0);
+			DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Orange, false, -1, 0, 4);
+
+			// update the line trace with a new start location or distance
+			TurnVector(Angle < 0, DistanceToObstacle);
 			break;
 		}
 	}
 }
 
-void AGenericBoidAI::CheckRotation(int32 Angle, float DeltaTime, bool bHit)
+void AGenericBoidAI::RadiusCohTrace(int32 NumTraces, float RadiusCoh)
 {
-	// If traces fire off on left actor turns right , add separate bool
-	/*if (TurnProgress < 1.f)
+	// Initializers 
+	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
+	TraceParams.AddIgnoredActor(this);
+
+	// Loops the traces around the body of the boid
+	for (int32 i = 0; i < NumTraces; i++)
 	{
-		for (; Angle < 0; RightTurnRate++)
+		// Creates a Circle Angle 
+		float Angle = 360.0f * i / NumTraces;
+		
+		// Gets the rotation for the boid 
+		FRotator Rotation(0, Angle, 0);
+		FVector DirectionVector = Rotation.Vector();
+		float TraceDistance = RadiusCoh;
+
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
+		FVector EndLoc = StartLoc + DirectionVector * TraceDistance;
+		
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Camera, TraceParams);
+		
+		// Shows the hit marker
+		if (bHit)
 		{
-			//bShouldTurn = true;
-			RightVectorMovement(bHit, DeltaTime, RightTurnRate);
-
-			if (RightTurnRate == 180)
+			// Calculate the box's dimensions & Location
+			FVector BoxExtents(10.0f, 10.0f, 10.0f);
+			FVector BoxLocation = EndLoc;
+			
+			// Draw a persistent debug line
+			if (GEngine)
 			{
-				//TurnProgress = 0;
-
-				// Go to new function which resets turn rate and turn progress to make it able to loop
 				
+				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Blue, false, -1, 0, 2);
+				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Blue, false, -1, 0, 4);
 				
-				return;
+				while(bHit)
+				{
+					
+					AActor* BoidCurrentlyHit = Hit.GetActor();
+					//TraceParams.AddIgnoredActor(StatActor);
+					
+					// Call the weight and input the incoming weight from the other boid 
+					CohWeight(BoidCurrentlyHit,NULL);
+					break;
+				}
 			}
 		}
-	}*/
+	}
 }
 
 void AGenericBoidAI::TurnVector(bool IsRight)
@@ -91,154 +128,277 @@ void AGenericBoidAI::TurnVector(bool IsRight)
 	
 }
 
-// This whole function is made to check if we are rotating,
-// if rotation is below 1 then we continue and return false 
-// if rotation is above 1 we return true
+// Follows the boid with the highest weight 
+void AGenericBoidAI::RadiusCohMovement()
+{
 
+	
+}
+
+void AGenericBoidAI::CohWeight(AActor* ActorHit, float Weight)
+{
+	AGenericBoidAI* BoidActor = Cast<AGenericBoidAI>(ActorHit);
+	if(BoidActor && BoidWeightMap.Contains(BoidActor))
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("BoidActor: %s"), BoidActor ? TEXT("true") : TEXT("false"));
+		
+		// iterates through the key-value pairs in TMap
+		// Use the TPair template as a pointer to the Pair variable
+		// The pair variable will serve as a reference to each of the the key-value pairs in the map
+		for (const TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
+		{
+			// Extract the key from the pair and store it in the actor
+			//BoidActor = Pair.Key;
+			// Extract the value and store it in the actor
+			//CurrentWeight = Pair.Value;
+			
+			/// PSudeo
+			/// Get the actors currently being hit
+			/// we get the actors key and value, that are being hit.
+			/// for each actor being hit, we want to increase their value by a specific amount (0.25f)
+			/// This increases by how many actors are being currently hit I.E. if default value is (1f)
+			/// and the increase value is (0.25f) for one actor being hit both of their values increase to (1.25f)
+			/// if an indiviual actor is hitting 2 boids then the said actors value will increase to (1.5f)
+			/// We also need a way for the values to decrease when the actors arent being hit anymore.
+
+			float inc = BoidWeightMap[BoidActor] += WeightIncease;
+			UE_LOG(LogTemp, Warning, TEXT("Updated Weight for Actor %s: %f"), *BoidActor->GetName(), inc);
+			
+			// Does not reach stack????????
+			// Go through a loop where we get the current weight, the amount of actors being hit and increasing the weight until i is equal to the number of actors.
+			/*for (int i = DefaultWeight; DefaultWeight < BoidWeightMap.Num(); i++)
+			{
+				// we then assign the value to a new variable
+				CurrentWeight = i;
+				UE_LOG(LogTemp, Warning, TEXT("Current Weight: %f"), CurrentWeight);
+				// Said boid found a boid with a high weight to follow
+				bFoundBoidTofollow = true;
+				UE_LOG(LogTemp, Warning, TEXT("bFoundBoidTofollow: %s"), bFoundBoidTofollow ? TEXT("true") : TEXT("false"));
+			}
+		}*/
+			//UE_LOG(LogTemp, Warning, TEXT("Added actor with name '%s' and weight '%f' to the map."), *ActorHit->GetName(), CurrentWeight);
+		}
+	}
+}
+
+void AGenericBoidAI::RadiusSepTrace(int32 NumTraces, float RadiusSep)
+{
+	// Initializers 
+	FVector StartLoc = GetActorLocation() + (GetActorForwardVector() * 50);
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams;
+	TraceParams.ClearIgnoredActors();
+	TraceParams.AddIgnoredActor(this);
+
+	// Loops the traces around the body of the boid
+	for (int32 i = 0; i < NumTraces; i++)
+	{
+		// Creates a Circle Angle 
+		float Angle = 360.0f * i / NumTraces;
+		
+		// Gets the rotation for the boid 
+		FRotator Rotation(0, Angle, 0);
+		FVector DirectionVector = Rotation.Vector();
+		float TraceDistance = RadiusSep;
+
+		// Where the end of the trace will hit. (Direction Vector so when the boid turns the vector updates)
+		FVector EndLoc = StartLoc + DirectionVector * TraceDistance;
+		
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, EndLoc, ECC_Camera, TraceParams);
+		
+		// Shows the hit marker
+		if (bHit)
+		{
+			// Calculate the box's dimensions & Location
+			FVector BoxExtents(10.0f, 10.0f, 10.0f);
+			FVector BoxLocation = EndLoc;
+			
+			// Draw a persistent debug line
+			if (GEngine)
+			{
+				
+				DrawDebugLine(GetWorld(), StartLoc, EndLoc, FColor::Green, false, -1, 0, 2);
+				DrawDebugBox(GetWorld(), BoxLocation, BoxExtents, FColor::Green, false, -1, 0, 4);
+				
+			}
+		}
+	}
+}
+
+void AGenericBoidAI::TurnVector(bool IsRight, float DistanceToObj)
+{
+	
+	bIsActiveRotating = true;
+	bIsRotatingRight = IsRight;
+
+	StartingRot = GetActorRotation().Yaw;
+	if (bIsActiveRotating)
+	{
+		constexpr float MaxSpeedToObj = 200.f;
+		constexpr float MinSpeedToObj = 50.f;
+
+		// Return a percentile value between 0 and 1
+		float SpeedMultiplier = FMath::GetMappedRangeValueClamped(FVector2d(0.0f, DistanceToObj), FVector2D(1.0f, 0.0f), DistanceToObj);
+		// Clamps the speed from 0 to 1 
+		SpeedMultiplier = FMath::Clamp(SpeedMultiplier, 0.0f, 1.0f);
+		// Interpolates the speed values and its change 
+		const float NewSpeed = FMath::Lerp(MaxSpeedToObj, MinSpeedToObj, SpeedMultiplier);
+
+		// BREAKING ENGINE 
+		// Assign New Values 
+		//TargetSpeed = NewSpeed;
+	} else
+	{
+		//TargetSpeed = MaxSpeed;
+	}
+}
 
 void AGenericBoidAI::ForwardMovement(float Speed, float DeltaTime, bool isTurning)
 {
-	if(isTurning)
-	{
-		Speed = 400.f;
-	}
-	else if(!isTurning)
-	{
-		Speed = 200.f;
-	}
-		// Where Actor currently is 
-		FVector CurrentLocation = GetActorLocation();
-		// adds the forward vector which is multiplied by the speed and the tick
-		CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
-		// Sets its new location
-		SetActorLocation(CurrentLocation);
+	// Where Actor currently is 
+	FVector CurrentLocation = GetActorLocation();
+	// Destination 
+	CurrentLocation += GetActorForwardVector() * Speed * DeltaTime;
+	// Sets its new location
+	SetActorLocation(CurrentLocation);
 }
 
-void AGenericBoidAI::RightVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate)
+
+
+void AGenericBoidAI::Acceleration(float DeltaTime, bool isTurning)
 {
-	// Log the parameters using UE_LOG
-	//UE_LOG(LogTemp, Warning, TEXT("bTraceHit: %s, DeltaTime: %f, TurnRate: %d"), bTraceHit ? TEXT("True") : TEXT("False"), DeltaTime, TurnRate);
-	/*
-	if(bTraceHit)
-	{
-		const FRotator RightRotation = FRotator(0, TurnRate, 0);
-		
-		TurnProgress += DeltaTime / RotationDelay;
-		UE_LOG(LogTemp, Warning, TEXT("TurnProg: %f "), TurnProgress);
-		UE_LOG(LogTemp, Warning, TEXT("RotationDelay: %f "), RotationDelay);
-		
-		TurnProgress = FMath::Clamp(TurnProgress, 0.f, 1.f);
-		UE_LOG(LogTemp, Warning, TEXT("TurnProg After Clamp: %f "), TurnProgress);
-		
-		// Interpolate the rotation smoothly using Lerp
-		const FRotator NewRotation = FMath::Lerp(NewRotation, RightRotation, TurnProgress);
-		SetActorRotation(NewRotation);
-		
-		//UE_LOG(LogTemp, Warning, TEXT("New Rotation: %s"), *NewRotation.ToString());
-		//UE_LOG(LogTemp, Warning, TEXT("RightRotation: %s"), *RightRotation.ToString());
-	}*/
 }
 
-void AGenericBoidAI::LeftVectorMovement(bool bTraceHit, float DeltaTime, int32 TurnRate)
-{
-	if(bTraceHit)
-	{
-
-		
-	}
-}
 
 // Called when the game starts or when spawned
 void AGenericBoidAI::BeginPlay()
-{
+{ 
 	Super::BeginPlay();
-}
-
-void AGenericBoidAI::DelayedRotation()
-{
-
+	
+	// Assign the boid to currect actor
+	AGenericBoidAI* Boid = this;
+	
+	// Add the actor and default weight 
+	BoidWeightMap.Add(Boid, DefaultWeight);
+	
+	/*
+	BoidArray.AddUnique(this);
+	for (AGenericBoidAI* Actor : BoidArray)
+	{
+		if (Actor && Actor->IsValidLowLevel())
+		{
+			//BoidWeightMap.Add(Actor, DefaultWeight);
+			for (TPair<AGenericBoidAI*, float>& Pair : BoidWeightMap)
+			{
+				
+				UE_LOG(LogTemp, Warning, TEXT("Actor: %s, Weight: %f"), *Actor->GetName(), Weight);
+			}
+			*/
+		/*else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Actor not found in the map."));
+		}
+			///UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *Actor->GetName());
+			// You can print more information about the actor if needed.
+		}*/
+	//}
 }
 
 // Called every frame
 void AGenericBoidAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	ForwardTrace(DeltaTime);
-	ForwardMovement(NULL, DeltaTime, bShouldTurn);
-
+	RadiusCohTrace(30, 300);
+	RadiusSepTrace(30, 220);
+	// Checks for active rotation.
 	if (bIsActiveRotating)
 	{
+		if(bFoundBoidTofollow)
+		{
+			RadiusCohMovement();
+		} else 
+		{
+			ForwardMovement(TargetSpeed, DeltaTime, true);
+		}
 		int Direction = bIsRotatingRight ? 1 : -1;
-		AddActorWorldRotation(FRotator(0,  Direction * RotationSpeed, 0));
+		AddActorWorldRotation(FRotator(0, Direction * RotationSpeed, 0));
 		bIsActiveRotating = GetActorRotation().Yaw - StartingRot > TurnAmount;
+	}else
+	{
+		if(bFoundBoidTofollow)
+		{
+			RadiusCohMovement();
+		} else 
+		{
+			ForwardMovement(TargetSpeed, DeltaTime, true);
+		}
 	}
 }
 
 
-//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
-//UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
 
-//FCollisionParameters::AddIgnoreActor(); Ignore Actor type
-		
-/*if(rayCast==true) foundWall=true
-if(foundWall==true){
-	//Run our lerp
-	if(lerpProgress==1){
-		foundWall=false;
-	
-		}*/
-
-/*// If traces fire off on right actor turns left
-		for (; Angle > 0; LeftTurnRate++)
-		{
-			const FRotator LeftRotation = FRotator(0, LeftTurnRate, 0);
-			SetActorRotation(LeftRotation);
-			UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Turning Degrees : %d"), Angle, RightTurnRate);
-
-			// Once hit maximum turn rate return
-			if (RightTurnRate == 90)
-			{
-				return;
-			}
-		}*/
-
-// Define the starting angle
-//int32 Angle = -45;
-// Continuously rotate while the line trace hits something
-/*while (true)
+/*void AGenericBoidAI::Seek(FVector Target)
 {
-	// Set the Vector rotation (Yaw) 
-	FVector DirectionVector = FRotationMatrix(FRotator(0, Angle, 0)).GetUnitAxis(EAxis::X);
-	// Start Location of trace
-	FVector StartLoc = GetActorLocation();
-	// Trace Distance
-	const float TraceDistance = 600.f;
-	// Trace Params
-	FCollisionQueryParams TraceParams;
 
-	FVector Endloc = StartLoc + DirectionVector * TraceDistance;
-    
-	// Perform the line trace
-	FHitResult Hit;
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, StartLoc, Endloc, ECC_Visibility, TraceParams);
-    
-	// Log the trace results
-	if (bHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Angle: %d - Hit Actor: %s"), Angle, *Hit.GetActor()->GetName());
-        
-		// Rotate the actor by 10 degrees
-		FRotator NewRotation = GetActorRotation();
-		NewRotation.Yaw += 10;
-		SetActorRotation(NewRotation);
-	}
-	else
-	{
-		// Trace was unsuccessful, break out of the loop
-		break;
-	}
-    
-	// Increment the angle for the next trace
-	Angle += 10;
+	/*FVector DesiredLoc = Target - GetActorLocation();
+	DesiredLoc.Normalize();
+	DesiredLoc *= MaxSpeed;
+
+	FVector Steer = DesiredLoc - Velocity;
+
+	ApplyForce(Steer);#1#
+}
+
+void AGenericBoidAI::ApplyForce(FVector Force)
+{
+	//Accel += Force;
 }*/
+
+
+/*Velocity += Accel * DeltaTime;
+
+Velocity = FVector::VectorPlaneProject(Velocity, FVector::UpVector);
+Velocity = FVector::GetClampedToSize(Velocity, MaxSpeed);
+
+FVector NewLocation = GetActorLocation() + Velocity * DeltaTime;
+SetActorLocation(NewLocation);
+
+Accel = FVector::ZeroVector;*/
+
+
+
+/*
+AActor* Boid = GetOwner();
+
+if(isTurning)
+{
+	//  Decrease Acceleration and speed for turning 
+	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, TurnDecelerationRate);
+	UE_LOG(LogTemp, Warning, TEXT("TurnDecelerationRate: %s"), *CurrentAcceleration.ToString());
+} else
+{
+	// increase acceleration and speed when not turning 
+	CurrentAcceleration = FMath::VInterpTo(CurrentAcceleration, TargetAcceleration, DeltaTime, AccelerationRate);
+	UE_LOG(LogTemp, Warning, TEXT("AccelerationRate: %s"), *CurrentAcceleration.ToString());
+}
+*/
+	
+//Boid->AddActorLocalOffset(CurrentAcceleration * DeltaTime);
+
+
+
+/*FVector TargetLoc = GetActorLocation();
+// Destination 
+TargetLoc += GetActorForwardVector();
+Seek(TargetLoc);*/
+	
+//ForwardMovement(NULL, DeltaTime, true);
+	
+//Radius(DeltaTime);
+//Acceleration(DeltaTime, );
+	
+// Acceleration has something to do with the speed variable
+// Is acceleration the same as velocity??
+// Maybe use velocity instead > Since the actor will need to be able to slow down and increase speed when its near to its traces object.. .. 
+	
